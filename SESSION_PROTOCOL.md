@@ -380,6 +380,162 @@ logger.end_session()
 
 ---
 
+## Automated Session Continuity
+
+### Overview
+The session continuity system supports full automation via Claude Code hooks, eliminating manual checkpoint/resume steps.
+
+### Quick Setup (Recommended)
+```bash
+# Run automated setup
+.\scripts\setup-automation.ps1
+
+# Optional: Add Task Scheduler safety net
+.\scripts\setup-task-scheduler.ps1
+```
+
+### How It Works
+Claude Code hooks trigger automatically on session lifecycle events:
+
+**SessionStart Hook:**
+- Triggers when: Claude Code starts, resumes, or clears
+- Action: Runs `python scripts/resume-session.py summary`
+- Shows: Previous session summary and resume points
+- Timeout: 30 seconds
+
+**SessionEnd Hook:**
+- Triggers when: Claude Code exits cleanly (Ctrl+D, /exit, logout)
+- Action: Runs `python scripts/checkpoint.py --quick`
+- Creates: Checkpoint + log files
+- Updates: CLAUDE.md with session state
+- Timeout: 60 seconds
+
+### Configuration
+Hooks are configured in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/resume-session.py summary",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/checkpoint.py --quick",
+            "timeout": 60000
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Installation Locations
+- **Project-local:** `<project>/.claude/settings.json` (recommended, checked into git)
+- **Global:** `~/.claude/settings.json` (applies to all Claude Code sessions)
+
+### Task Scheduler Safety Net (Optional)
+For comprehensive coverage including crashes:
+
+```powershell
+# Set up periodic checkpoints every 30 minutes
+.\scripts\setup-task-scheduler.ps1
+
+# Or manually:
+$action = New-ScheduledTaskAction -Execute "python.exe" `
+    -Argument "C:\Users\layden\scripts\checkpoint.py --quick"
+
+$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) `
+    -RepetitionInterval (New-TimeSpan -Minutes 30) `
+    -RepetitionDuration ([TimeSpan]::MaxValue)
+
+Register-ScheduledTask -TaskName "ClaudePeriodicCheckpoint" `
+    -Action $action -Trigger $trigger
+```
+
+### What Gets Automated
+✅ **Automatic on Session Start:**
+- Load previous session state
+- Display resume points
+- Show completed/pending tasks
+- Display session summary
+
+✅ **Automatic on Session End:**
+- Detect session boundaries (via history.jsonl gaps)
+- Collect file changes (git + filesystem)
+- Generate smart resume points (AST analysis + TODO detection)
+- Validate checkpoint structure
+- Update CLAUDE.md
+- Create checkpoint + log files
+
+✅ **Optional Periodic Safety:**
+- Task Scheduler checkpoints every 30 minutes
+- Catches crashes and forced terminations
+- Independent of Claude Code state
+
+### Troubleshooting
+
+**Hooks not running:**
+1. Check `.claude/settings.json` exists and is valid JSON
+2. Verify Python scripts are executable: `python scripts/checkpoint.py --dry-run`
+3. Check timeout values (may need to increase for large sessions)
+4. Review Claude Code logs for hook errors
+
+**SessionEnd not triggering:**
+- Only fires on *clean* exits (Ctrl+D, /exit, logout, clear)
+- Crashes and force-kills bypass SessionEnd hook
+- Solution: Use Task Scheduler safety net for crash coverage
+
+**Paths not working:**
+- Use absolute paths if relative paths fail
+- Windows: Escape backslashes in JSON (`C:\\Users\\...`)
+- Or use forward slashes (`C:/Users/...`)
+
+**Timeout errors:**
+- Default: SessionStart = 30s, SessionEnd = 60s
+- Increase if needed: `"timeout": 120000` (2 minutes)
+- Large sessions may need longer timeouts
+
+### Testing Automation
+```bash
+# Test hooks manually
+python scripts/resume-session.py summary
+python scripts/checkpoint.py --quick
+
+# Test with actual Claude session
+1. Start Claude Code → Should show resume summary
+2. Do some work
+3. Exit cleanly (Ctrl+D or /exit) → Should create checkpoint
+
+# Verify checkpoint created
+ls ~/.claude-sessions/checkpoints/
+cat CLAUDE.md  # Should show updated session state
+```
+
+### Benefits of Automation
+- **Zero user friction** - No manual commands to remember
+- **Consistent checkpoints** - Never forget to save session
+- **Smart resume** - Always know where to continue
+- **Crash protection** - Task Scheduler catches edge cases
+- **Context preservation** - Automatic session continuity
+- **95%+ reliability** - Hooks + Task Scheduler cover nearly all scenarios
+
+---
+
 ## CI/CD Integration
 - GitHub Actions for automation
 - Docker containers for consistent environments

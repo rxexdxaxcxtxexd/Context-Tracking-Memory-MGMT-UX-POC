@@ -109,6 +109,27 @@ Implementing 10 critical improvements to session continuity system:
 
 ---
 
+## Automated Session Continuity
+
+**Setup automation (one-time):**
+```bash
+.\scripts\setup-automation.ps1                    # Configure Claude Code hooks
+.\scripts\setup-task-scheduler.ps1                # Optional: Add periodic safety net
+```
+
+**How it works:**
+- **SessionStart hook** → Auto-runs `resume-session.py` when Claude starts
+- **SessionEnd hook** → Auto-runs `checkpoint.py` when Claude exits
+- **Task Scheduler** (optional) → Periodic checkpoints every 30 min (catches crashes)
+
+**Result:** Zero manual work - sessions auto-save and auto-resume!
+
+**Configuration:** `.claude/settings.json` (already created in this project)
+
+**Troubleshooting:** See [SESSION_PROTOCOL.md - Automated Session Continuity](SESSION_PROTOCOL.md#automated-session-continuity)
+
+---
+
 ## Quick Reference
 
 ### Create Checkpoint
