@@ -33,7 +33,8 @@ CHECKPOINT_SCHEMA = {
         "current_task",
         "problems_encountered",
         "decisions",
-        "context"
+        "context",
+        "dependencies"  # Phase 3: Cross-file dependency tracking
     ],
     "field_types": {
         "session_id": str,
@@ -47,7 +48,8 @@ CHECKPOINT_SCHEMA = {
         "resume_points": list,
         "problems_encountered": list,
         "decisions": list,
-        "context": dict
+        "context": dict,
+        "dependencies": dict  # Phase 3: Dict mapping file paths to dependency info
     },
     "list_item_schemas": {
         "file_changes": {
@@ -175,6 +177,46 @@ def validate_checkpoint(checkpoint: Dict) -> Tuple[bool, List[str]]:
     if "file_changes" in checkpoint:
         if len(checkpoint["file_changes"]) > 10000:
             errors.append(f"Suspiciously large number of file_changes: {len(checkpoint['file_changes'])}")
+
+    # Validate dependencies structure (Phase 3)
+    if "dependencies" in checkpoint:
+        dependencies = checkpoint["dependencies"]
+        if isinstance(dependencies, dict):
+            for filepath, dep_data in dependencies.items():
+                if not isinstance(dep_data, dict):
+                    errors.append(f"dependencies['{filepath}']: expected dict, got {type(dep_data).__name__}")
+                    continue
+
+                # Check required fields in each dependency
+                required_dep_fields = [
+                    "file_path", "imports_from", "used_by", "used_by_count",
+                    "function_calls_to", "has_tests", "impact_score"
+                ]
+                for field in required_dep_fields:
+                    if field not in dep_data:
+                        errors.append(f"dependencies['{filepath}']: missing field '{field}'")
+
+                # Validate field types
+                if "file_path" in dep_data and not isinstance(dep_data["file_path"], str):
+                    errors.append(f"dependencies['{filepath}'].file_path: expected str")
+                if "imports_from" in dep_data and not isinstance(dep_data["imports_from"], list):
+                    errors.append(f"dependencies['{filepath}'].imports_from: expected list")
+                if "used_by" in dep_data and not isinstance(dep_data["used_by"], list):
+                    errors.append(f"dependencies['{filepath}'].used_by: expected list")
+                if "used_by_count" in dep_data and not isinstance(dep_data["used_by_count"], int):
+                    errors.append(f"dependencies['{filepath}'].used_by_count: expected int")
+                if "function_calls_to" in dep_data and not isinstance(dep_data["function_calls_to"], list):
+                    errors.append(f"dependencies['{filepath}'].function_calls_to: expected list")
+                if "has_tests" in dep_data and not isinstance(dep_data["has_tests"], bool):
+                    errors.append(f"dependencies['{filepath}'].has_tests: expected bool")
+                if "impact_score" in dep_data and not isinstance(dep_data["impact_score"], int):
+                    errors.append(f"dependencies['{filepath}'].impact_score: expected int")
+
+                # Validate impact score range
+                if "impact_score" in dep_data:
+                    score = dep_data["impact_score"]
+                    if not (0 <= score <= 100):
+                        errors.append(f"dependencies['{filepath}'].impact_score: must be 0-100, got {score}")
 
     return (len(errors) == 0, errors)
 

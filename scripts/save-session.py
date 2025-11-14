@@ -33,6 +33,20 @@ session_logger = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(session_logger)
 SessionLogger = session_logger.SessionLogger
 
+# Import dependency analyzer
+spec_dep = importlib.util.spec_from_file_location("dependency_analyzer",
+    os.path.join(os.path.dirname(__file__), "dependency_analyzer.py"))
+dependency_analyzer = importlib.util.module_from_spec(spec_dep)
+spec_dep.loader.exec_module(dependency_analyzer)
+DependencyAnalyzer = dependency_analyzer.DependencyAnalyzer
+
+# Import resume point generator
+spec_resume = importlib.util.spec_from_file_location("resume_point_generator",
+    os.path.join(os.path.dirname(__file__), "resume_point_generator.py"))
+resume_point_generator = importlib.util.module_from_spec(spec_resume)
+spec_resume.loader.exec_module(resume_point_generator)
+enhance_resume_points = resume_point_generator.enhance_resume_points
+
 
 class SessionSaver:
     """Intelligently collect and save session data"""
@@ -309,6 +323,56 @@ class SessionSaver:
                 merged[filepath] = change
 
         return list(merged.values())
+
+    def collect_dependencies(self, changed_files: List[str]) -> Dict:
+        """Analyze cross-file dependencies for changed files
+
+        Args:
+            changed_files: List of relative file paths that changed
+
+        Returns:
+            Dict mapping file paths to FileDependency objects (as dicts)
+        """
+        try:
+            # Only analyze Python files
+            python_files = [f for f in changed_files if f.endswith('.py')]
+
+            if not python_files:
+                return {}
+
+            # Performance guard: skip if too many files
+            if len(python_files) > 50:
+                print(f"  Skipping dependency analysis ({len(python_files)} files, limit is 50)")
+                return {}
+
+            print(f"  Analyzing dependencies for {len(python_files)} Python file(s)...")
+
+            # Run dependency analysis
+            analyzer = DependencyAnalyzer(
+                base_dir=self.base_dir,
+                changed_files=python_files
+            )
+            dependencies = analyzer.analyze_dependencies()
+
+            # Convert FileDependency objects to dicts for JSON serialization
+            from dataclasses import asdict
+            dependencies_dict = {
+                filepath: asdict(dep)
+                for filepath, dep in dependencies.items()
+            }
+
+            # Print summary
+            high_impact = [d for d in dependencies.values() if d.impact_score >= 70]
+            if high_impact:
+                print(f"  Found {len(high_impact)} high-impact file(s) (score >= 70)")
+                for dep in high_impact[:3]:  # Show top 3
+                    print(f"    - {dep.file_path} (used by {dep.used_by_count} file(s), score: {dep.impact_score})")
+
+            return dependencies_dict
+
+        except Exception as e:
+            print(f"  Warning: Dependency analysis failed: {e}")
+            return {}
 
     def parse_todo_items(self) -> List[Dict]:
         """Extract completed todo items from the session"""
@@ -696,6 +760,10 @@ class SessionSaver:
         for step in session_data['next_steps']:
             logger.add_next_step(step)
 
+        # Add dependencies (Phase 3)
+        if 'dependencies' in session_data:
+            logger.dependencies = session_data['dependencies']
+
         # End session
         checkpoint_file, log_file = logger.end_session()
 
@@ -788,14 +856,33 @@ def main():
         if saver.skipped_files['large'] > 0:
             print(f"    - {saver.skipped_files['large']} large file(s) (>{saver.MAX_FILE_SIZE:,} bytes)")
 
+    # Analyze dependencies (Phase 1.2: Cross-file dependency tracking)
+    dependencies = {}
+    if all_changes:
+        changed_file_paths = [c['file_path'] for c in all_changes]
+        dependencies = saver.collect_dependencies(changed_file_paths)
+
+        # Enrich changes with dependency data
+        for change in all_changes:
+            filepath = change['file_path']
+            if filepath in dependencies:
+                change['dependencies'] = dependencies[filepath]
+
+    # Generate base resume points (from AST, TODOs, etc.)
+    base_resume_points = saver.suggest_resume_points(all_changes)
+
+    # Enhance resume points with dependency analysis (Phase 2.1)
+    final_resume_points = enhance_resume_points(base_resume_points, dependencies) if dependencies else base_resume_points
+
     # Generate auto-detected data
     auto_detected = {
         'description': args.description if args.description else saver.infer_session_description(all_changes),
         'changes': all_changes,
-        'resume_points': saver.suggest_resume_points(all_changes),
+        'resume_points': final_resume_points,
         'next_steps': saver.suggest_next_steps(all_changes),
         'problems': [],
-        'decisions': []
+        'decisions': [],
+        'dependencies': dependencies  # Include dependency summary
     }
 
     # Determine mode

@@ -62,6 +62,7 @@ class SessionCheckpoint:
     resume_points: List[str]
     problems_encountered: List[str] = field(default_factory=list)
     next_steps: List[str] = field(default_factory=list)
+    dependencies: Dict[str, Dict] = field(default_factory=dict)  # Phase 3: Cross-file dependency tracking
 
 
 class SessionLogger:
@@ -93,6 +94,7 @@ class SessionLogger:
         self.resume_points: List[str] = []
         self.problems_encountered: List[str] = []
         self.next_steps: List[str] = []
+        self.dependencies: Dict[str, Dict] = {}  # Phase 3: Cross-file dependency tracking
 
     def start_session(self, description: str, context: Dict[str, Any] = None):
         """Start a new session with initial context"""
@@ -203,7 +205,8 @@ class SessionLogger:
             context=self.context,
             resume_points=self.resume_points,
             problems_encountered=self.problems_encountered,
-            next_steps=self.next_steps
+            next_steps=self.next_steps,
+            dependencies=self.dependencies  # Phase 3: Cross-file dependency tracking
         )
 
         # Convert dataclasses to dict
