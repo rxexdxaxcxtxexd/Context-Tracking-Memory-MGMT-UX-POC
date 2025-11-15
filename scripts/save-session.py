@@ -350,7 +350,8 @@ class SessionSaver:
             # Run dependency analysis
             analyzer = DependencyAnalyzer(
                 base_dir=self.base_dir,
-                changed_files=python_files
+                changed_files=python_files,
+                use_cache=True  # Phase 4.1: Enable caching
             )
             dependencies = analyzer.analyze_dependencies()
 
@@ -360,6 +361,12 @@ class SessionSaver:
                 filepath: asdict(dep)
                 for filepath, dep in dependencies.items()
             }
+
+            # Print cache statistics
+            if analyzer.cache_hits > 0 or analyzer.cache_misses > 0:
+                total = analyzer.cache_hits + analyzer.cache_misses
+                hit_rate = (analyzer.cache_hits / total * 100) if total > 0 else 0
+                print(f"  Cache: {analyzer.cache_hits} hits, {analyzer.cache_misses} misses ({hit_rate:.1f}% hit rate)")
 
             # Print summary
             high_impact = [d for d in dependencies.values() if d.impact_score >= 70]
@@ -821,6 +828,11 @@ def main():
         default=240,
         help='Look for changes in the last N minutes (default: 240)'
     )
+    parser.add_argument(
+        '--skip-dependencies',
+        action='store_true',
+        help='Skip dependency analysis for faster checkpoints (Phase 4.2)'
+    )
 
     args = parser.parse_args()
 
@@ -858,7 +870,7 @@ def main():
 
     # Analyze dependencies (Phase 1.2: Cross-file dependency tracking)
     dependencies = {}
-    if all_changes:
+    if all_changes and not args.skip_dependencies:
         changed_file_paths = [c['file_path'] for c in all_changes]
         dependencies = saver.collect_dependencies(changed_file_paths)
 
@@ -867,6 +879,8 @@ def main():
             filepath = change['file_path']
             if filepath in dependencies:
                 change['dependencies'] = dependencies[filepath]
+    elif args.skip_dependencies:
+        print("  Skipping dependency analysis (--skip-dependencies flag)")
 
     # Generate base resume points (from AST, TODOs, etc.)
     base_resume_points = saver.suggest_resume_points(all_changes)

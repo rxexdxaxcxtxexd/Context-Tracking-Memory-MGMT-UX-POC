@@ -13,6 +13,8 @@ Used by save-session.py to generate smarter resume points and impact warnings.
 
 import ast
 import os
+import json
+import hashlib
 from pathlib import Path
 from typing import Dict, List, Set, Optional, Tuple
 from dataclasses import dataclass, asdict
@@ -34,16 +36,23 @@ class FileDependency:
 class DependencyAnalyzer:
     """Analyzes cross-file dependencies in Python codebases"""
 
-    def __init__(self, base_dir: Path, changed_files: List[str]):
+    def __init__(self, base_dir: Path, changed_files: List[str], use_cache: bool = True):
         """
         Initialize dependency analyzer
 
         Args:
             base_dir: Project root directory
             changed_files: List of file paths that changed (relative to base_dir)
+            use_cache: Whether to use dependency caching (default: True)
         """
         self.base_dir = Path(base_dir)
         self.changed_files = [self.base_dir / f for f in changed_files]
+        self.use_cache = use_cache
+
+        # Cache directory
+        self.cache_dir = Path.home() / ".claude-sessions" / "dependency_cache"
+        if self.use_cache:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Dependency graph
         self.imports: Dict[str, Set[str]] = defaultdict(set)  # file -> imports
@@ -52,7 +61,108 @@ class DependencyAnalyzer:
 
         # Performance tracking
         self.files_analyzed = 0
+        self.cache_hits = 0
+        self.cache_misses = 0
         self.errors = []
+
+    def _get_cache_key(self, filepath: Path) -> str:
+        """Generate cache key for a file
+
+        Args:
+            filepath: Absolute path to file
+
+        Returns:
+            Cache key (hex hash of relative path)
+        """
+        rel_path = str(filepath.relative_to(self.base_dir))
+        # Use hash to avoid filesystem issues with special characters
+        return hashlib.md5(rel_path.encode()).hexdigest()
+
+    def _get_cache_path(self, filepath: Path) -> Path:
+        """Get cache file path for a source file
+
+        Args:
+            filepath: Absolute path to file
+
+        Returns:
+            Path to cache file
+        """
+        cache_key = self._get_cache_key(filepath)
+        return self.cache_dir / f"{cache_key}.json"
+
+    def _load_cached_dependency(self, filepath: Path) -> Optional[FileDependency]:
+        """Load cached dependency if still valid
+
+        Args:
+            filepath: Absolute path to file
+
+        Returns:
+            FileDependency if cache valid, None otherwise
+        """
+        if not self.use_cache:
+            return None
+
+        cache_path = self._get_cache_path(filepath)
+
+        if not cache_path.exists():
+            return None
+
+        try:
+            # Check if source file is newer than cache
+            source_mtime = filepath.stat().st_mtime
+            cache_mtime = cache_path.stat().st_mtime
+
+            if source_mtime > cache_mtime:
+                # Source file modified after cache was created
+                return None
+
+            # Load cached data
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                cache_data = json.load(f)
+
+            # Validate cache has required fields
+            required_fields = ['file_path', 'imports_from', 'used_by', 'used_by_count',
+                             'function_calls_to', 'has_tests', 'impact_score', 'mtime']
+
+            if not all(field in cache_data for field in required_fields):
+                return None
+
+            # Check if mtime matches (additional validation)
+            if cache_data['mtime'] != source_mtime:
+                return None
+
+            # Convert to FileDependency (remove mtime field)
+            del cache_data['mtime']
+            return FileDependency(**cache_data)
+
+        except Exception:
+            # Cache corrupted or unreadable, ignore
+            return None
+
+    def _save_cached_dependency(self, filepath: Path, dependency: FileDependency):
+        """Save dependency to cache
+
+        Args:
+            filepath: Absolute path to file
+            dependency: FileDependency object to cache
+        """
+        if not self.use_cache:
+            return
+
+        try:
+            cache_path = self._get_cache_path(filepath)
+
+            # Add mtime for validation
+            cache_data = asdict(dependency)
+            cache_data['mtime'] = filepath.stat().st_mtime
+
+            # Save to cache
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                json.dump(cache_data, f, indent=2)
+
+        except Exception:
+            # Failed to cache, not critical
+            pass
 
     def analyze_dependencies(self) -> Dict[str, FileDependency]:
         """
@@ -61,11 +171,28 @@ class DependencyAnalyzer:
         Returns:
             Dict mapping file paths to FileDependency objects
         """
-        # Step 1: Analyze changed files
+        dependencies = {}
+
+        # Step 1: Try to load from cache or analyze changed files
+        files_to_analyze = []
         for filepath in self.changed_files:
             if not filepath.exists() or not filepath.suffix == '.py':
                 continue
 
+            # Try cache first
+            cached_dep = self._load_cached_dependency(filepath)
+            if cached_dep is not None:
+                self.cache_hits += 1
+                rel_path = str(filepath.relative_to(self.base_dir))
+                dependencies[rel_path] = cached_dep
+                # Still need to track imports for reverse dependencies
+                self.imports[str(filepath)] = set(cached_dep.imports_from)
+            else:
+                self.cache_misses += 1
+                files_to_analyze.append(filepath)
+
+        # Step 2: Analyze files not in cache
+        for filepath in files_to_analyze:
             try:
                 self._analyze_file(filepath)
             except Exception as e:
@@ -74,15 +201,17 @@ class DependencyAnalyzer:
                     'error': str(e)
                 })
 
-        # Step 2: Analyze files that import changed files (reverse deps)
+        # Step 3: Analyze files that import changed files (reverse deps)
         self._find_reverse_dependencies()
 
-        # Step 3: Build FileDependency objects
-        dependencies = {}
-        for filepath in self.changed_files:
+        # Step 4: Build FileDependency objects for newly analyzed files
+        for filepath in files_to_analyze:
             if filepath.exists() and filepath.suffix == '.py':
                 dep = self._build_file_dependency(filepath)
-                dependencies[str(filepath.relative_to(self.base_dir))] = dep
+                rel_path = str(filepath.relative_to(self.base_dir))
+                dependencies[rel_path] = dep
+                # Save to cache
+                self._save_cached_dependency(filepath, dep)
 
         return dependencies
 

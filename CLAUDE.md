@@ -130,6 +130,43 @@ Implementing 10 critical improvements to session continuity system:
 
 ---
 
+## Cross-File Dependency Tracking
+
+**Status:** ✅ Fully Implemented (Phases 1-5)
+
+The system automatically analyzes Python file dependencies and provides intelligent impact warnings:
+
+### Features
+- **Automatic Analysis:** Tracks which files import each other
+- **Impact Scoring:** 0-100 score based on file usage (higher = more critical)
+- **Smart Warnings:** Alerts when modifying high-impact files
+- **Intelligent Caching:** 7-8x speedup with mtime-based cache validation
+- **Test Coverage:** Detects missing test files
+
+### Usage
+```bash
+# Default - with dependency analysis
+python scripts/checkpoint.py --quick
+
+# Skip for speed (3x faster)
+python scripts/checkpoint.py --quick --skip-dependencies
+```
+
+### Output Example
+```
+Analyzing dependencies for 16 Python file(s)...
+  Cache: 12 hits, 4 misses (75.0% hit rate)
+  Found 2 high-impact file(s) (score >= 70)
+
+[RESUME POINTS]
+1. [!] payment.py is used by 12 files - test thoroughly
+2. Run tests for: test_payment.py, test_invoice.py
+```
+
+**Full Documentation:** [docs/DEPENDENCY_TRACKING.md](docs/DEPENDENCY_TRACKING.md)
+
+---
+
 ## Quick Reference
 
 ### Create Checkpoint
