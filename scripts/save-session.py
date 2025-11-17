@@ -40,6 +40,13 @@ project_tracker = importlib.util.module_from_spec(spec_tracker)
 spec_tracker.loader.exec_module(project_tracker)
 ProjectTracker = project_tracker.ProjectTracker
 
+# Import session index
+spec_index = importlib.util.spec_from_file_location("session_index",
+    os.path.join(os.path.dirname(__file__), "session_index.py"))
+session_index = importlib.util.module_from_spec(spec_index)
+spec_index.loader.exec_module(session_index)
+SessionIndex = session_index.SessionIndex
+
 
 # ============================================================================
 # PROJECT DETECTION AND SELECTION
@@ -1068,6 +1075,17 @@ class SessionSaver:
                     print(f"  ✓ Checkpoint updated with commit info")
                 except Exception as e:
                     print(f"  Warning: Could not update checkpoint with git info: {e}")
+
+        # Register checkpoint in session index
+        print("\nRegistering in session index...")
+        try:
+            with open(checkpoint_file, 'r', encoding='utf-8') as f:
+                checkpoint_data = json.load(f)
+
+            index = SessionIndex()
+            index.register_checkpoint(checkpoint_file, checkpoint_data)
+        except Exception as e:
+            print(f"  Warning: Could not register checkpoint in index: {e}")
 
         # Update CLAUDE.md
         print("\nUpdating CLAUDE.md...")

@@ -10,6 +10,9 @@ This script helps resume work in a new Claude Code session by:
 """
 
 import json
+import os
+import sys
+import importlib.util
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List
@@ -19,6 +22,13 @@ from rich.panel import Panel
 from rich.markdown import Markdown
 from rich import box
 
+# Import session index
+spec_index = importlib.util.spec_from_file_location("session_index",
+    os.path.join(os.path.dirname(__file__), "session_index.py"))
+session_index = importlib.util.module_from_spec(spec_index)
+spec_index.loader.exec_module(session_index)
+SessionIndex = session_index.SessionIndex
+
 
 class SessionResumer:
     """Load and display previous session information"""
@@ -26,11 +36,11 @@ class SessionResumer:
     def __init__(self, base_dir: str = None):
         """Initialize the session resumer"""
         if base_dir is None:
-            base_dir = Path.home()
+            base_dir = Path.cwd()  # Use current working directory, not home
 
         self.base_dir = Path(base_dir)
-        self.checkpoints_dir = self.base_dir / ".claude-sessions" / "checkpoints"
-        self.logs_dir = self.base_dir / ".claude-sessions" / "logs"
+        self.checkpoints_dir = Path.home() / ".claude-sessions" / "checkpoints"
+        self.logs_dir = Path.home() / ".claude-sessions" / "logs"
 
         # Try to use rich for pretty output, fall back to simple print
         # On Windows, rich can have encoding issues, so default to simple
@@ -47,6 +57,130 @@ class SessionResumer:
         except Exception:
             self.console = None
             self.use_rich = False
+
+    def _get_current_project_metadata(self) -> Optional[Dict[str, Any]]:
+        """
+        Get project metadata for the current working directory.
+
+        Returns:
+            Project metadata dict, or None if not in a project directory
+        """
+        try:
+            import subprocess
+
+            # Check if current directory is a git repo
+            result = subprocess.run(
+                ['git', 'rev-parse', '--is-inside-work-tree'],
+                cwd=self.base_dir,
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+
+            if result.returncode != 0:
+                return None
+
+            metadata = {
+                'absolute_path': str(self.base_dir.resolve()),
+                'name': self.base_dir.name
+            }
+
+            # Get git info
+            try:
+                # Remote URL
+                remote_result = subprocess.run(
+                    ['git', 'config', '--get', 'remote.origin.url'],
+                    cwd=self.base_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if remote_result.returncode == 0:
+                    metadata['git_remote_url'] = remote_result.stdout.strip()
+
+                # Branch
+                branch_result = subprocess.run(
+                    ['git', 'branch', '--show-current'],
+                    cwd=self.base_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if branch_result.returncode == 0:
+                    metadata['git_branch'] = branch_result.stdout.strip()
+            except:
+                pass
+
+            return metadata
+
+        except Exception:
+            return None
+
+    def _projects_match(self, project_a: Optional[Dict], project_b: Optional[Dict]) -> bool:
+        """
+        Check if two project metadata dicts represent the same project.
+
+        Args:
+            project_a: First project metadata
+            project_b: Second project metadata
+
+        Returns:
+            True if projects match, False otherwise
+        """
+        if not project_a or not project_b:
+            return False
+
+        # Primary: Git remote URL match
+        remote_a = project_a.get('git_remote_url')
+        remote_b = project_b.get('git_remote_url')
+
+        if remote_a and remote_b:
+            # Normalize URLs
+            remote_a_clean = remote_a.rstrip('.git').replace('http://', 'https://')
+            remote_b_clean = remote_b.rstrip('.git').replace('http://', 'https://')
+            if remote_a_clean == remote_b_clean:
+                return True
+
+        # Fallback: Absolute path match
+        path_a = project_a.get('absolute_path')
+        path_b = project_b.get('absolute_path')
+
+        if path_a and path_b:
+            return str(Path(path_a).resolve()) == str(Path(path_b).resolve())
+
+        return False
+
+    def validate_checkpoint_project(self, checkpoint: dict) -> Optional[str]:
+        """
+        Validate that checkpoint belongs to current project.
+
+        Args:
+            checkpoint: Checkpoint data
+
+        Returns:
+            Warning message if mismatch, None if OK
+        """
+        checkpoint_project = checkpoint.get('project')
+        if not checkpoint_project:
+            return "⚠️ Checkpoint has no project metadata (old checkpoint)"
+
+        current_project = self._get_current_project_metadata()
+        if not current_project:
+            # Not in a git project directory
+            return None
+
+        if not self._projects_match(checkpoint_project, current_project):
+            # Project mismatch!
+            checkpoint_name = checkpoint_project.get('name', 'Unknown')
+            current_name = current_project.get('name', 'Unknown')
+            return (
+                f"⚠️ PROJECT MISMATCH!\n"
+                f"  Checkpoint from: {checkpoint_name}\n"
+                f"  Current project: {current_name}\n"
+                f"  This checkpoint may not apply to your current work."
+            )
+
+        return None
 
     def load_latest_checkpoint(self) -> Optional[dict]:
         """Load the most recent checkpoint"""
@@ -106,6 +240,26 @@ class SessionResumer:
             title="📋 Session Checkpoint",
             border_style="cyan"
         ))
+
+        # Project Information (if available)
+        project = checkpoint.get('project')
+        if project:
+            self.console.print(f"\n[bold cyan]📂 Project:[/bold cyan]")
+            self.console.print(f"  Name:   {project.get('name', 'Unknown')}")
+            self.console.print(f"  Path:   {project.get('absolute_path', 'Unknown')}")
+            if project.get('git_remote_url'):
+                remote_url = project['git_remote_url']
+                # Shorten GitHub URLs
+                if 'github.com' in remote_url:
+                    import re
+                    match = re.search(r'github\.com[:/](.+?)(?:\.git)?$', remote_url)
+                    if match:
+                        remote_url = f"github.com/{match.group(1)}"
+                self.console.print(f"  Remote: {remote_url}")
+            if project.get('git_branch'):
+                self.console.print(f"  Branch: {project['git_branch']}")
+        else:
+            self.console.print(f"\n[dim]⚠️ Project metadata not available (old checkpoint)[/dim]")
 
         # Context
         context = checkpoint.get('context', {})
@@ -209,6 +363,26 @@ class SessionResumer:
         print(f"Started: {checkpoint['started_at']}")
         print(f"Checkpoint: {checkpoint['timestamp']}")
 
+        # Project Information (if available)
+        project = checkpoint.get('project')
+        if project:
+            print("\n[PROJECT]")
+            print(f"  Name:   {project.get('name', 'Unknown')}")
+            print(f"  Path:   {project.get('absolute_path', 'Unknown')}")
+            if project.get('git_remote_url'):
+                remote_url = project['git_remote_url']
+                # Shorten GitHub URLs
+                if 'github.com' in remote_url:
+                    import re
+                    match = re.search(r'github\.com[:/](.+?)(?:\.git)?$', remote_url)
+                    if match:
+                        remote_url = f"github.com/{match.group(1)}"
+                print(f"  Remote: {remote_url}")
+            if project.get('git_branch'):
+                print(f"  Branch: {project['git_branch']}")
+        else:
+            print("\n[!] Project metadata not available (old checkpoint)")
+
         # Context
         context = checkpoint.get('context', {})
         if context:
@@ -302,6 +476,14 @@ class SessionResumer:
 
     def display_checkpoint(self, checkpoint: dict):
         """Display checkpoint information"""
+        # Validate checkpoint project matches current directory
+        validation_warning = self.validate_checkpoint_project(checkpoint)
+        if validation_warning:
+            print("\n" + "="*70)
+            print(validation_warning)
+            print("="*70)
+            print()
+
         if self.use_rich and self.console:
             self.display_checkpoint_rich(checkpoint)
         else:
@@ -374,6 +556,50 @@ class SessionResumer:
         return "\n".join(lines)
 
 
+    def display_projects_index(self):
+        """Display all projects tracked in the session index"""
+        index = SessionIndex()
+        projects = index.list_all_projects()
+
+        if not projects:
+            print("\nNo projects tracked yet.")
+            print("Run save-session.py to create your first checkpoint.")
+            return
+
+        print("\n" + "="*70)
+        print(f"TRACKED PROJECTS ({len(projects)})")
+        print("="*70)
+
+        for proj in projects:
+            print(f"\nProject: {proj['project_name']}")
+            print(f"  Path: {proj['project_path']}")
+            if proj['git_remote_url']:
+                remote_url = proj['git_remote_url']
+                # Shorten GitHub URLs
+                if 'github.com' in remote_url:
+                    import re
+                    match = re.search(r'github\.com[:/](.+?)(?:\.git)?$', remote_url)
+                    if match:
+                        remote_url = f"github.com/{match.group(1)}"
+                print(f"  Remote: {remote_url}")
+            print(f"  Checkpoints: {proj['checkpoint_count']}")
+            if proj['last_checkpoint']:
+                # Calculate time ago
+                try:
+                    last_time = datetime.fromisoformat(proj['last_checkpoint'])
+                    now = datetime.now()
+                    delta = now - last_time
+                    if delta.total_seconds() < 3600:
+                        time_ago = f"{int(delta.total_seconds() / 60)} minutes ago"
+                    elif delta.total_seconds() < 86400:
+                        time_ago = f"{int(delta.total_seconds() / 3600)} hours ago"
+                    else:
+                        time_ago = f"{int(delta.total_seconds() / 86400)} days ago"
+                    print(f"  Last checkpoint: {time_ago}")
+                except:
+                    print(f"  Last checkpoint: {proj['last_checkpoint']}")
+
+
 def main():
     """Command-line interface"""
     import sys
@@ -393,6 +619,9 @@ def main():
                 print(resumer.generate_resume_summary(checkpoint))
             else:
                 print("No checkpoint found")
+            return
+        elif command == "projects":
+            resumer.display_projects_index()
             return
         else:
             # Try to load by session ID
