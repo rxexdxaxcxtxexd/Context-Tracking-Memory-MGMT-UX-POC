@@ -1,0 +1,129 @@
+# Claude Code internal files
+.claude/
+.claude-sessions/checkpoints/*.json
+.claude-sessions/logs/*.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backups
+*.backup
+*.bak
+
+# ====================
+# System Directories (Windows User Home)
+# ====================
+.cache/
+.azuredatastudio/
+.bun/
+.config/
+.cursor/
+.docker/
+.dotnet/
+.nuget/
+.hypothesis/
+IntelGraphicsProfiles/
+AppData/
+
+# ====================
+# Windows System Files
+# ====================
+NTUSER.DAT*
+ntuser.dat*
+ntuser.ini
+desktop.ini
+
+# ====================
+# Personal Directories
+# ====================
+Documents/
+Music/
+Videos/
+Pictures/
+Downloads/
+OneDrive*/
+Contacts/
+Favorites/
+Links/
+Saved Games/
+Searches/
+
+# ====================
+# Build & Dependencies
+# ====================
+node_modules/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# ====================
+# Temporary & Output
+# ====================
+*.tmp
+.claude_md_tmp_*
+nul
+integration_output/
+temp_analysis/
+temp_sdk_analysis/
+
+# ====================
+# Archives & Generated
+# ====================
+*.zip
+*.tar.gz
+*.rar
+job_result.json
+
+# ====================
+# Projects (Separate Repos)
+# ====================
+# Projects are tracked in their own git repositories
+# This repo tracks workspace configuration only
+Projects/
+
+# ====================
+# Reference Materials
+# ====================
+# Large reference codebases not for tracking
+Codebases/
