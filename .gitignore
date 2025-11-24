@@ -1,7 +1,8 @@
 # Claude Code internal files
 .claude/
-.claude-sessions/checkpoints/*.json
-.claude-sessions/logs/*.md
+.claude-sessions/
+# Exception: Track the README for documentation
+!.claude-sessions/README.md
 
 # Python
 __pycache__/

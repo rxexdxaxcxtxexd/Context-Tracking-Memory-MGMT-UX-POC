@@ -22,7 +22,7 @@ import subprocess
 import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 import re
 
 # Import session logger
@@ -280,7 +280,7 @@ def handle_project_switch(current_project: Dict[str, Any],
     active_project = active_state['project']
 
     print("\n" + "="*70)
-    print("⚠️ PROJECT SWITCH DETECTED")
+    print("WARNING: PROJECT SWITCH DETECTED")
     print("="*70)
 
     print(f"\nPrevious project: {tracker.get_project_summary(active_project)}")
@@ -290,7 +290,7 @@ def handle_project_switch(current_project: Dict[str, Any],
     has_uncommitted = active_state.get('has_uncommitted_changes', False)
 
     if has_uncommitted:
-        print(f"\n⚠️  WARNING: You have uncommitted work in the previous project!")
+        print(f"\n  WARNING: You have uncommitted work in the previous project!")
         print(f"   Last checkpoint: {tracker.format_time_ago(active_state.get('last_checkpoint', ''))}")
 
     print("\nWhat would you like to do?")
@@ -306,7 +306,7 @@ def handle_project_switch(current_project: Dict[str, Any],
             if choice == '1':
                 return 'checkpoint'
             elif choice == '2':
-                confirm = input("⚠️  Confirm discard? Type 'yes' to confirm: ").strip().lower()
+                confirm = input("  Confirm discard? Type 'yes' to confirm: ").strip().lower()
                 if confirm == 'yes':
                     return 'discard'
                 else:
@@ -1044,7 +1044,7 @@ def main():
 
         elif choice == 'discard':
             # User chose to discard previous project changes
-            print(f"\n⚠️  Discarding changes from {active_state['project']['name']}")
+            print(f"\n  Discarding changes from {active_state['project']['name']}")
             print(f"Continuing with current project: {current_project['name']}\n")
 
         elif choice == 'cancel':
