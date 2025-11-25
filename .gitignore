@@ -128,3 +128,4 @@ Projects/
 # ====================
 # Large reference codebases not for tracking
 Codebases/
+.claude.json
