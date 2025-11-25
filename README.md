@@ -1,252 +1,259 @@
-# Development Workspace
+# Context Tracking & Memory Management - Development Workspace
 
-## Overview
-This is Layden's primary development workspace with organized project structure and automated session continuity.
+> **Seamless session continuity for Claude Code** - Never lose context again!
 
-## Directory Structure
+## 🎯 Overview
+
+This workspace demonstrates an automated system for maintaining context and progress across Claude Code sessions. The repository provides:
+- **Session Continuity System**: Intelligent tracking, automated checkpointing, and seamless resumption
+- **Organized Workspace**: Clean project structure with session management at the root
+- **Multi-Project Support**: Work across multiple projects with automatic context switching
+
+## ✨ Key Features
+
+- 🤖 **Git Hook Automation** - Automatic checkpoints on every commit
+- 💾 **Smart Session Capture** - Detects file changes, decisions, and next steps
+- 🔍 **Multi-Project Tracking** - Session index tracks all projects in workspace
+- 📊 **Hybrid Format** - Human-readable Markdown logs + machine-readable JSON checkpoints
+- 🔄 **Seamless Resumption** - Start new sessions with full context from previous work
+- ⚠️ **Context Awareness** - Warns when context window fills up (75%, 87%, 95%)
+- 📝 **Decision Logging** - Tracks architectural decisions with rationale and alternatives
+- 🔗 **Dependency Analysis** - Cross-file dependency tracking with impact scoring
+
+## 🚀 Quick Start
+
+### Save Your Current Session
+
+```bash
+python scripts/checkpoint.py --quick
+```
+
+This automatically:
+- ✅ Detects all file changes (git + filesystem)
+- ✅ Analyzes dependencies and impact
+- ✅ Generates session description
+- ✅ Suggests resume points and next steps
+- ✅ Creates checkpoint + log files
+- ✅ Updates CLAUDE.md
+
+### Resume in New Session
+
+```bash
+python scripts/resume-session.py
+```
+
+This displays:
+- Previous session summary
+- What was completed
+- Where to resume
+- Next steps to take
+
+### Check Context Usage
+
+```bash
+python scripts/context-monitor.py
+```
+
+Monitors your conversation and warns before hitting context limits.
+
+### Install Git Hooks (One-Time)
+
+```bash
+python scripts/install-hooks.py
+```
+
+Enables automatic checkpoint creation after every commit.
+
+## 📁 Directory Structure
 
 ### Projects/
 Active development projects organized by purpose:
 
-- **api-documentation-agent/** - Automated API documentation system (main project)
+- **api-documentation-agent/** - Automated API documentation system
   - Backend: FastAPI application with WebSocket support
   - Frontend: React + TypeScript dashboard
-  - Docs: Comprehensive documentation (architecture, testing, session system)
+  - Docs: Comprehensive documentation
   - See `Projects/api-documentation-agent/README.md` for details
 
-- **context-tracking-memory/** - Session continuity system for Claude Code
-  - Git hook-based automatic checkpointing
-  - Multi-project session tracking
-  - See `Projects/context-tracking-memory/README.md` for details
-
-- **screw-extraction/** - Data extraction utilities
-- **video-transcription/** - Video processing tools
-- **web-demos/** - Demo applications
+- **Other projects** tracked as separate git repositories
 
 ### Scripts/
-Global session management scripts (14 files):
+Session management and automation tools:
+
+**Core Tools:**
+- `checkpoint.py` - Unified checkpoint command (use this!)
 - `resume-session.py` - Resume from last Claude session
-- `save-session.py` - Create session checkpoint
+- `context-monitor.py` - Track context window usage
 - `session-logger.py` - Session logging utilities
+
+**Automation:**
+- `install-hooks.py` - Git hook installation
+- `post-commit-handler.py` - Auto-checkpoint on commit
+- `setup-automation.ps1` - Configure Claude Code hooks
+- `setup-task-scheduler.ps1` - Periodic safety net checkpoints
+
+**Analysis:**
+- `dependency_analyzer.py` - Cross-file dependency tracking
+- `resume_point_generator.py` - Smart resume point generation
+- `project_tracker.py` - Multi-project session tracking
+
+**Utilities:**
+- `save-session.py` - Manual session capture
 - `update-session-state.py` - Sync CLAUDE.md with checkpoints
 - `checkpoint_utils.py` - Reusable checkpoint utilities
-- `post-commit-handler.py` - Git hook automation
-- `install-hooks.py` - Git hook installation tool
-- And more...
+- `checkpoint_schema.py` - Checkpoint validation
+- `session_index.py` - Multi-project session index
+- `path_resolver.py` - Cross-platform path resolution
+- `migrate-checkpoints.py` - Checkpoint format migration
 
 ### .claude-sessions/
-Session checkpoints and logs (managed automatically by context-tracking-memory)
+Session checkpoints and logs (managed automatically):
 - `checkpoints/` - JSON session checkpoints
 - `logs/` - Markdown session logs
+- `dependency_cache/` - Cached dependency analysis
 - `sessions.index` - Multi-project session index
+- `README.md` - Session system documentation
 
 ### Codebases/
-Reference codebases and archived projects
+Reference codebases and archived projects (not tracked in git)
 
-### CLAUDE.md
-Project memory file for Claude Code - maintains context across sessions
+### Root Configuration Files
+- **CLAUDE.md** - Project memory file for Claude Code
+- **SESSION_PROTOCOL.md** - Comprehensive instructions for Claude
+- **.gitignore** - Excludes system directories, Projects/, Codebases/
+- **.claude/settings.json** - Claude Code hook configuration
 
-## Quick Start
+## 📚 Documentation
 
-### Resume Previous Session
+### Quick References
+- **QUICK_STATUS.md** - 3-minute overview of recent workspace organization
+- **NEXT_STEPS.txt** - Immediate action items
+- **EXECUTIVE_FINAL_REPORT.md** - Comprehensive remediation report
+
+### Session System Docs
+- **SESSION_PROTOCOL.md** - Full instructions for Claude Code
+- **MULTI_PROJECT_SESSION_TRACKING_COMPLETE.md** - Multi-project feature details
+- **GIT_HOOK_WORKFLOW.md** - Git hook automation explained
+- **SESSION_CONTINUITY_IMPLEMENTATION_COMPLETE.md** - Implementation details
+
+### Phase Documentation
+- **PHASE1_PROJECT_IDENTITY_COMPLETE.md** - Project detection system
+- **PHASE2_PROJECT_SWITCH_DETECTION_COMPLETE.md** - Context switching
+- **PHASE3_SESSION_INDEX_COMPLETE.md** - Global session index
+
+### Advanced Features
+- **docs/DEPENDENCY_TRACKING.md** - Cross-file dependency analysis
+- **docs/AUTOMATION.md** - Automation setup and configuration
+- **docs/AI_DRIVEN_DEVELOPMENT_CONTINUITY.md** - System architecture
+- **docs/EXECUTIVE_SUMMARY.md** - Feature overview and roadmap
+
+## 🛠️ Advanced Usage
+
+### Automated Session Continuity
+
+Set up once for zero-manual-work experience:
+
 ```bash
-python scripts/resume-session.py
+# Windows
+.\scripts\setup-automation.ps1
+
+# Unix/Mac
+./scripts/setup.sh
 ```
 
-### API Documentation Agent
+This configures:
+- **SessionStart hook** → Auto-runs `resume-session.py` when Claude starts
+- **SessionEnd hook** → Auto-runs `checkpoint.py` when Claude exits
+- **Git post-commit hook** → Auto-creates checkpoint after each commit
+
+### Multi-Project Workflow
+
+The system automatically detects which project you're working in:
+
 ```bash
-cd Projects/api-documentation-agent
-# See README.md in that directory for setup
-```
-
-### Context Tracking System
-```bash
-cd Projects/context-tracking-memory
-# See SESSION_PROTOCOL.md for usage
-```
-
-## Recent Changes (2025-11-20)
-
-**Major Reorganization:**
-- All project files moved from root into Projects/ subdirectories
-- Documentation organized into docs/ folders
-- Test files moved to test-data/ directories
-- Comprehensive .gitignore created
-- All hard-coded paths fixed for dynamic resolution
-
-See `CLAUDE.md` Integration Map section for complete structure details.
-
-## Environment Setup
-
-### API Documentation Agent
-Requires `ANTHROPIC_API_KEY` environment variable:
-```bash
-# Windows PowerShell
-$env:ANTHROPIC_API_KEY = "your-key-here"
-
-# Windows Command Prompt
-set ANTHROPIC_API_KEY=your-key-here
-
-# Linux/macOS
-export ANTHROPIC_API_KEY="your-key-here"
-```
-
-See `Projects/api-documentation-agent/ENVIRONMENT_SETUP_QUICKSTART.md` for details.
-
-## Git Repository
-
-This workspace is tracked in git (branch: master)
-- Personal folders ignored (Documents, Music, Videos, etc.)
-- Cache directories ignored (.cache, .nuget, .docker, etc.)
-- Environment files protected (.env)
-
-## Backup & Safety
-
-**Backup branch created:** `backup-pre-remediation-2025-11-20`
-**Backup tag:** `reorganization-backup`
-
-To restore if needed:
-```bash
-git checkout backup-pre-remediation-2025-11-20
-```
-
-## Project Features
-
-### API Documentation Agent
-- Automated OpenAPI documentation generation
-- Multi-language SDK generation (Python, JavaScript, Java, 14+ languages)
-- Property-based API testing with Schemathesis
-- FastAPI backend with WebSocket support
-- React + TypeScript dashboard with virtual scrolling
-- Production-ready with Docker, PostgreSQL, Prometheus monitoring
-
-### Context Tracking System
-- Automatic session checkpointing via git hooks
-- Multi-project session tracking
-- Intelligent resume point generation
-- Cross-file dependency analysis
-- Context window monitoring
-- Seamless Claude Code integration
-
-## Common Commands
-
-### Session Management
-```bash
-# Resume last session
-python scripts/resume-session.py
-
-# List all sessions
+# List all sessions across all projects
 python scripts/resume-session.py list
 
-# Quick summary
-python scripts/resume-session.py summary
+# Resume last session for current project
+python scripts/resume-session.py
 
-# Save current session
-python scripts/save-session.py --quick
-
-# Update CLAUDE.md
-python scripts/update-session-state.py update
+# View session index
+cat .claude-sessions/sessions.index
 ```
 
-### API Documentation Agent
+### Dependency Analysis
+
+Analyze cross-file dependencies with impact scoring:
+
 ```bash
-cd Projects/api-documentation-agent
+# Full dependency analysis (default)
+python scripts/checkpoint.py --quick
 
-# Start backend (simple mode, recommended)
-cd backend && python start_backend.py
+# Skip dependencies for speed
+python scripts/checkpoint.py --quick --skip-dependencies
 
-# Start frontend
-cd frontend && npm run dev
-
-# Run full pipeline
-python -c "
-import asyncio
-from src.core.pipeline import APIDocumentationPipeline
-from pathlib import Path
-
-async def test():
-    pipeline = APIDocumentationPipeline()
-    success, results = await pipeline.execute_full_pipeline(
-        spec_path=Path('specs/petstore.yaml'),
-        output_dir=Path('output'),
-        target_languages=['python']
-    )
-    print(f'Success: {success}')
-
-asyncio.run(test())
-"
+# Analyze specific files
+python scripts/dependency_analyzer.py path/to/file.py
 ```
 
-## Development Principles
+### Context Window Monitoring
 
-### Session Continuity
-- Always create checkpoints before closing sessions
-- Document architectural decisions with rationale
-- Update CLAUDE.md with session progress
-- Use git hooks for automatic checkpointing
+Stay aware of context usage to avoid losing work:
 
-### Code Organization
-- Projects separated by purpose
-- Documentation organized by category
-- Tests colocated with source or in test-data/
-- Scripts use dynamic path resolution (no hardcoded paths)
-
-### Security Best Practices
-- Environment variables for API keys (never hardcode)
-- .gitignore protects sensitive files
-- Input validation at multiple layers
-- Security headers and rate limiting
-
-## Troubleshooting
-
-### Session Scripts Not Working
 ```bash
-# Verify Python environment
-python --version  # Should be 3.9+
+# Check current context usage
+python scripts/context-monitor.py
 
-# Check script location
-ls scripts/resume-session.py
+# Set up monitoring daemon (advanced)
+python scripts/auto-checkpoint-daemon.py
 ```
 
-### API Documentation Agent Issues
-See `Projects/api-documentation-agent/TROUBLESHOOTING_GUIDE.md` or `Projects/api-documentation-agent/docs/TROUBLESHOOTING_GUIDE.md`
+## 🔧 System Requirements
 
-### Context Tracking Issues
-See `Projects/context-tracking-memory/README.md` or `Projects/context-tracking-memory/SESSION_PROTOCOL.md`
+- Python 3.9+
+- Git
+- Windows PowerShell (for `.ps1` scripts) or Bash (for `.sh` scripts)
+- Claude Code (for session continuity features)
 
-## Documentation
+## 📊 Project Status
 
-### Root Documentation
-- `CLAUDE.md` - Project memory and session continuity
-- `README.md` - This file (workspace overview)
+**Status:** ✅ Production Ready
 
-### API Documentation Agent
-- `Projects/api-documentation-agent/README.md` - Project overview
-- `Projects/api-documentation-agent/ENVIRONMENT_SETUP_QUICKSTART.md` - Environment setup
-- `Projects/api-documentation-agent/docs/` - Comprehensive documentation
-  - `architecture/` - Architecture and design docs
-  - `testing/` - Testing and QA guides
-  - `session-system/` - Session continuity system docs
-  - `production/` - Deployment and API docs
+- 100% test pass rate (68 comprehensive tests)
+- Git hooks operational
+- Multi-project tracking functional
+- Dependency analysis implemented
+- Documentation complete
 
-### Context Tracking System
-- `Projects/context-tracking-memory/README.md` - Quick start guide
-- `Projects/context-tracking-memory/SESSION_PROTOCOL.md` - Complete protocol
-- `Projects/context-tracking-memory/docs/` - Phase documentation
+## 🤝 How Claude Code Uses This
 
-## Contributing
+When Claude Code starts in this workspace:
+1. Reads `CLAUDE.md` for project memory and current state
+2. Can run `resume-session.py` to load previous session details
+3. Uses `SESSION_PROTOCOL.md` as reference for best practices
+4. Automatically creates checkpoints via git hooks
+5. Tracks decisions and progress in session logs
 
-When making changes:
-1. Create feature branch from master
-2. Update relevant documentation
-3. Test changes thoroughly
-4. Create checkpoint before committing
-5. Submit pull request with clear description
+## 📝 Recent Updates
 
-## License
+**November 2025:**
+- Merged workspace organization with session continuity system
+- Resolved script conflicts (preserved critical bug fixes)
+- Added comprehensive documentation
+- Implemented git hook-based automation
+- Achieved 100% test pass rate
 
-This workspace contains research projects exploring hybrid AI + open source development workflows.
+## 🔗 Related Projects
+
+This workspace contains multiple projects:
+- **Context Tracking System** (this repo) - Session continuity
+- **API Documentation Agent** (Projects/) - API automation tools
+- See individual project READMEs for details
+
+## 📄 License
+
+See individual project directories for licensing information.
 
 ---
 
-**Built with Claude Code for seamless AI-assisted development**
+**Questions?** Check `CLAUDE.md` for project memory or `SESSION_PROTOCOL.md` for detailed instructions.

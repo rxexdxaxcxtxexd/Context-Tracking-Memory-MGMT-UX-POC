@@ -213,16 +213,16 @@ class PostCommitHandler:
             checkpoint_file = self.create_checkpoint_for_commit()
 
             if checkpoint_file:
-                print(f"\nSUCCESS: Session checkpoint created: {Path(checkpoint_file).name}")
+                print(f"\n✓ Session checkpoint created: {Path(checkpoint_file).name}")
                 return 0
             else:
                 # Don't fail the commit even if checkpoint creation fails
-                print("\nWARNING: Checkpoint creation failed (commit succeeded)", file=sys.stderr)
+                print("\n⚠ Checkpoint creation failed (commit succeeded)", file=sys.stderr)
                 return 0  # Return 0 to not break git workflow
 
         except Exception as e:
             # Catch all exceptions to prevent breaking git workflow
-            print(f"\nWARNING: Post-commit hook error: {e}", file=sys.stderr)
+            print(f"\n⚠ Post-commit hook error: {e}", file=sys.stderr)
             return 0  # Return 0 to not break git workflow
 
 

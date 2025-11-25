@@ -161,7 +161,7 @@ class SessionIndex:
         # Save updated index
         self._save_index()
 
-        print(f"SUCCESS: Checkpoint registered in session index")
+        print(f"✓ Checkpoint registered in session index")
 
     def get_project_checkpoints(self, project_path: str,
                                limit: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -348,7 +348,7 @@ class SessionIndex:
                 print(f"Warning: Could not load {checkpoint_file.name}: {e}")
                 continue
 
-        print(f"SUCCESS: Index rebuilt - {count} checkpoint(s) indexed across {len(self.index['projects'])} project(s)")
+        print(f"✓ Index rebuilt: {count} checkpoint(s) indexed across {len(self.index['projects'])} project(s)")
 
         return count
 

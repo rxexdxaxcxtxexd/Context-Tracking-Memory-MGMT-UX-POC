@@ -62,7 +62,7 @@ class GitHookInstaller:
 
         # Check if hook already exists
         if self.hook_exists():
-            print(f"\nWARNING: Post-commit hook already exists: {self.post_commit_hook}")
+            print(f"\n⚠ Post-commit hook already exists: {self.post_commit_hook}")
             response = input("Overwrite existing hook? (y/n): ").strip().lower()
             if response != 'y':
                 print("Installation cancelled.")
@@ -82,15 +82,15 @@ class GitHookInstaller:
                 os.chmod(self.post_commit_hook, current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
             print("\n" + "="*70)
-            print("SUCCESS: POST-COMMIT HOOK INSTALLED")
+            print("✓ POST-COMMIT HOOK INSTALLED SUCCESSFULLY")
             print("="*70)
             print(f"Repository: {self.repo_path}")
             print(f"Hook file:  {self.post_commit_hook}")
             print()
             print("What happens now:")
-            print("  - Every git commit will automatically create a session checkpoint")
-            print("  - Checkpoints will be linked to commits via commit hash")
-            print("  - save-session.py now stages changes (user commits manually)")
+            print("  • Every git commit will automatically create a session checkpoint")
+            print("  • Checkpoints will be linked to commits via commit hash")
+            print("  • save-session.py now stages changes (user commits manually)")
             print()
             print("Next steps:")
             print("  1. Test the hook: python scripts/install-hooks.py --test")
@@ -138,11 +138,11 @@ try:
     sys.exit(result.returncode)
 
 except subprocess.TimeoutExpired:
-    print("\\nWARNING: Checkpoint creation timed out (commit succeeded)", file=sys.stderr)
+    print("\\n⚠ Checkpoint creation timed out (commit succeeded)", file=sys.stderr)
     sys.exit(0)  # Don't break commit
 
 except Exception as e:
-    print(f"\\nWARNING: Post-commit hook error: {{e}} (commit succeeded)", file=sys.stderr)
+    print(f"\\n⚠ Post-commit hook error: {{e}} (commit succeeded)", file=sys.stderr)
     sys.exit(0)  # Don't break commit
 """
         return hook_content
@@ -164,7 +164,7 @@ except Exception as e:
                 content = f.read()
 
             if "scripts/install-hooks.py" not in content:
-                print("\nWARNING: Post-commit hook was not installed by this script.")
+                print("\n⚠ Warning: Post-commit hook was not installed by this script.")
                 response = input("Remove it anyway? (y/n): ").strip().lower()
                 if response != 'y':
                     print("Uninstall cancelled.")
@@ -174,7 +174,7 @@ except Exception as e:
             self.post_commit_hook.unlink()
 
             print("\n" + "="*70)
-            print("SUCCESS: POST-COMMIT HOOK REMOVED")
+            print("✓ POST-COMMIT HOOK REMOVED")
             print("="*70)
             print(f"Removed: {self.post_commit_hook}")
             print()
@@ -240,7 +240,7 @@ except Exception as e:
 
             print()
             print("="*70)
-            print("SUCCESS: HOOK TEST PASSED")
+            print("✓ HOOK TEST SUCCESSFUL")
             print("="*70)
             print()
             print("The hook is working correctly!")
