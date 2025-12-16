@@ -213,16 +213,35 @@ class PostCommitHandler:
             checkpoint_file = self.create_checkpoint_for_commit()
 
             if checkpoint_file:
-                print(f"\n✓ Session checkpoint created: {Path(checkpoint_file).name}")
-                return 0
+                print(f"\n[OK] Session checkpoint created: {Path(checkpoint_file).name}")
             else:
                 # Don't fail the commit even if checkpoint creation fails
-                print("\n⚠ Checkpoint creation failed (commit succeeded)", file=sys.stderr)
-                return 0  # Return 0 to not break git workflow
+                print("\n[!] Checkpoint creation failed (commit succeeded)", file=sys.stderr)
+
+            # Generate code context file (Phase 2: claude-mem migration)
+            try:
+                import subprocess
+                context_script = Path(__file__).parent / 'generate_code_context.py'
+                result = subprocess.run(
+                    [sys.executable, str(context_script), 'HEAD'],
+                    cwd=self.base_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                if result.returncode == 0:
+                    print("[OK] Code context generated: .claude-code-context.md")
+                else:
+                    print(f"[!] Code context generation failed: {result.stderr}", file=sys.stderr)
+            except Exception as e:
+                # Don't fail commit if context generation fails
+                print(f"[!] Code context generation error: {e}", file=sys.stderr)
+
+            return 0  # Always return 0 to not break git workflow
 
         except Exception as e:
             # Catch all exceptions to prevent breaking git workflow
-            print(f"\n⚠ Post-commit hook error: {e}", file=sys.stderr)
+            print(f"\n[!] Post-commit hook error: {e}", file=sys.stderr)
             return 0  # Return 0 to not break git workflow
 
 

@@ -129,3 +129,4 @@ Projects/
 # Large reference codebases not for tracking
 Codebases/
 .claude.json
+.claude-code-context.md
