@@ -4,9 +4,71 @@
 
 ---
 
-## Instructions for Claude Code
+## ⚠️ MIGRATION NOTICE (2025-12-15)
 
-**IMPORTANT:** These instructions are for Claude to follow during sessions. Read and follow these at session start.
+**This protocol has been superseded by the claude-mem + Code Context hybrid system (Phase 3+).**
+
+**NEW WORKFLOW (Current):**
+- **Automatic session tracking** via git hooks (no manual commands)
+- **Semantic search** with `/mem-search` (no manual checkpoint loading)
+- **Code context** auto-generated in `.claude-code-context.md`
+- **See:** `docs/MIGRATION_GUIDE.md` for complete new workflow
+
+**OLD WORKFLOW (Below):**
+The instructions below describe the **deprecated file-based checkpoint system**. They are preserved for:
+- Historical reference
+- Understanding system evolution
+- Emergency rollback procedures
+
+**For current workflow, see:**
+- `docs/CLAUDE_MEM_GUIDE.md` - Semantic search with `/mem-search`
+- `docs/CODE_CONTEXT_GUIDE.md` - Understanding `.claude-code-context.md`
+- `docs/ARCHITECTURE.md` - System architecture
+- `CLAUDE.md` - Quick reference (updated for new workflow)
+
+---
+
+## New Workflow Quick Reference (Phase 3+)
+
+### Session Start (Automatic)
+- SessionStart hook displays recent code context from `.claude-code-context.md`
+- No manual initialization needed
+
+### During Work (Automatic)
+- claude-mem captures observations automatically during conversations
+- No manual logging needed
+
+### Session End (Automatic)
+- SessionEnd hook generates code context for uncommitted changes
+- No manual checkpoint needed
+
+### Committing Code (Triggers Automation)
+```bash
+git add .
+git commit -m "Your message"
+# → Checkpoint + code context auto-generated via post-commit hook
+```
+
+### Searching Past Context
+```bash
+/mem-search <your query>
+# Examples:
+/mem-search authentication implementation
+/mem-search why did we choose Redis?
+```
+
+### Viewing Recent Changes
+```bash
+cat .claude-code-context.md  # Technical snapshot of last commit
+```
+
+---
+
+## Instructions for Claude Code (DEPRECATED - Historical Reference)
+
+**IMPORTANT:** These instructions describe the old manual checkpoint system. See "New Workflow" above for current approach.
+
+**Note:** The scripts referenced below (session-logger.py, checkpoint.py, resume-session.py) have been moved to `scripts/deprecated/` and show deprecation warnings.
 
 ### Session Start Protocol
 
