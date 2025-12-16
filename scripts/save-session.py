@@ -2,11 +2,16 @@
 """
 Automated Session Saver - Intelligently collect and save session data
 
-This script automatically detects what happened during a Claude Code session by:
-1. Analyzing git changes (if git repo)
-2. Scanning directory for modified files
-3. Parsing completed todo items
-4. Inferring session metadata from changes
+⚠️  DEPRECATION WARNING ⚠️
+This script is deprecated as of Phase 3 of the claude-mem migration.
+
+NEW WORKFLOW:
+  - Session checkpoints: Automatic via git post-commit hook
+  - Code context: Auto-generated in .claude-code-context.md
+  - Semantic search: Use /mem-search in Claude Code
+  - Memory: Automatic via claude-mem plugin
+
+See docs/MIGRATION_GUIDE.md for details on the new workflow.
 
 Usage:
     python save-session.py                    # Interactive mode
@@ -52,6 +57,47 @@ spec_utils = importlib.util.spec_from_file_location("checkpoint_utils",
     os.path.join(os.path.dirname(__file__), "checkpoint_utils.py"))
 checkpoint_utils = importlib.util.module_from_spec(spec_utils)
 spec_utils.loader.exec_module(checkpoint_utils)
+
+
+def print_deprecation_warning():
+    """Print deprecation warning and prompt user"""
+    print()
+    print("=" * 70)
+    print(" " * 20 + "⚠️  DEPRECATION WARNING ⚠️")
+    print("=" * 70)
+    print()
+    print("This script (save-session.py) is deprecated.")
+    print()
+    print("REASON:")
+    print("  The system has migrated to claude-mem for automatic memory capture.")
+    print()
+    print("NEW WORKFLOW:")
+    print("  1. Make changes and commit with git")
+    print("  2. Checkpoint + code context generated automatically")
+    print("  3. Use /mem-search to retrieve context across sessions")
+    print()
+    print("BENEFITS:")
+    print("  - Zero manual work (fully automated)")
+    print("  - Semantic search across all sessions")
+    print("  - Better context preservation")
+    print()
+    print("See: docs/MIGRATION_GUIDE.md for migration details")
+    print("See: .claude-code-context.md for current code context")
+    print()
+    print("=" * 70)
+    print()
+
+    response = input("Continue with deprecated save-session anyway? (y/N): ")
+    if response.lower() != 'y':
+        print()
+        print("Aborting. Use the new workflow instead:")
+        print("  1. Commit your changes: git add . && git commit -m 'message'")
+        print("  2. Context auto-generated on commit")
+        print()
+        sys.exit(0)
+    print()
+    print("Continuing with deprecated save-session...")
+    print()
 
 
 # ============================================================================
@@ -1007,6 +1053,10 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # Show deprecation warning (unless --dry-run)
+    if not args.dry_run:
+        print_deprecation_warning()
 
     # Initialize saver with project path if provided
     if args.project_path:

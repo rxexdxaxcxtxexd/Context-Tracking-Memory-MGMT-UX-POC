@@ -8,34 +8,39 @@ The workspace also hosts the API Documentation Agent project and related tools i
 ## Session Protocol
 For comprehensive instructions on session tracking and continuity, see [SESSION_PROTOCOL.md](SESSION_PROTOCOL.md).
 
-**Quick commands:**
+**Quick workflow:**
 ```bash
-python scripts/checkpoint.py --quick        # Save session
-python scripts/resume-session.py            # Load previous session
-python scripts/context-monitor.py           # Check context usage
+# Work on code, then commit - that's it!
+git add .
+git commit -m "Your commit message"
+# → Checkpoint + code context auto-generated via post-commit hook
+
+# Search past sessions semantically
+/mem-search authentication implementation
+
+# View latest code context
+cat .claude-code-context.md
+
+# Check context usage
+python scripts/context-monitor.py
 ```
+
+**Migration:** The old checkpoint scripts (`checkpoint.py`, `resume-session.py`, `save-session.py`) are deprecated. See [docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md) for the new workflow.
 
 ---
 
 ## Current Session State
 
-**Last Updated:** 2025-12-15 20:15:50
-**Session ID:** 13c938ad
+**Note:** This section is no longer auto-updated with the new claude-mem migration (Phase 3+).
 
-### Resume Points
-1. Continue work on claude/settings.json
+**New Workflow:**
+- Code context is auto-generated in `.claude-code-context.md` on every commit
+- Session observations are automatically captured by claude-mem
+- Use `/mem-search` to retrieve context from past sessions
+- SessionStart hook displays recent context when Claude Code starts
 
-### Next Steps
-- [ ] Write tests for new/modified code
-- [ ] Review newly created files for completeness
-- [ ] Verify all changes work as expected
-
-### Recent Changes
-- ➕ `.claude-sessions.backup\checkpoints\checkpoint-20251215-175032.json`
-- ➕ `.claude-sessions.backup\checkpoints\checkpoint-20251215-175034.json`
-- ➕ `.claude-sessions.backup\checkpoints\checkpoint-20251215-175035.json`
-- ➕ `.claude-sessions.backup\checkpoints\checkpoint-20251215-175037.json`
-- ➕ `.claude-sessions.backup\checkpoints\checkpoint-20251215-175040.json`
+**For latest code context:** See `.claude-code-context.md` (auto-updated on commit)
+**For semantic search:** Use `/mem-search <query>` in Claude Code
 
 ## Integration Map
 
@@ -134,57 +139,72 @@ This repository has **two layers**:
 
 ## Automated Session Continuity
 
-**Setup automation (one-time):**
+**Status:** ✅ Migrated to claude-mem + Code Context Hybrid (Phase 3)
+
+**How it works now:**
+- **SessionStart hook** → Auto-displays recent code context from `.claude-code-context.md`
+- **SessionEnd hook** → Auto-generates code context for uncommitted changes
+- **Git post-commit hook** → Auto-creates checkpoint + code context with dependencies
+- **claude-mem plugin** → Auto-captures session observations for semantic search
+
+**Result:** Zero manual work - fully automated context preservation + semantic search!
+
+**Configuration:**
+- `.claude/settings.json` - SessionStart/End hooks + claude-mem plugin
+- `.git/hooks/post-commit` - Code context generation
+- `CLAUDE_MEM_CONTEXT_OBSERVATIONS=25` - Optimized for cost (~$11.25/month)
+
+**New Workflow:**
 ```bash
-.\scripts\setup-automation.ps1                    # Configure Claude Code hooks
-.\scripts\setup-task-scheduler.ps1                # Optional: Add periodic safety net
+# 1. Make changes and commit
+git add .
+git commit -m "Your message"
+# → Checkpoint + code context auto-generated
+
+# 2. Search past sessions
+/mem-search <query>
+
+# 3. View latest code context
+cat .claude-code-context.md
 ```
 
-**How it works:**
-- **SessionStart hook** → Auto-runs `resume-session.py` when Claude starts
-- **SessionEnd hook** → Auto-runs `checkpoint.py` when Claude exits
-- **Git post-commit hook** → Auto-creates checkpoint after each commit
-- **Task Scheduler** (optional) → Periodic checkpoints every 30 min (catches crashes)
-
-**Result:** Zero manual work - sessions auto-save and auto-resume!
-
-**Configuration:** `.claude/settings.json` (already created in this project)
-
-**Troubleshooting:** See [SESSION_PROTOCOL.md - Automated Session Continuity](SESSION_PROTOCOL.md#automated-session-continuity)
+**Migration:** See [docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md) for transitioning from old checkpoint scripts
 
 ---
 
 ## Cross-File Dependency Tracking
 
-**Status:** ✅ Fully Implemented (Phases 1-5)
+**Status:** ✅ Integrated into Code Context Layer (Phase 2)
 
-The system automatically analyzes Python file dependencies and provides intelligent impact warnings:
+The system automatically analyzes Python file dependencies and provides intelligent impact warnings in `.claude-code-context.md`:
 
 ### Features
-- **Automatic Analysis:** Tracks which files import each other
+- **Automatic Analysis:** Tracks which files import each other (via AST parsing)
 - **Impact Scoring:** 0-100 score based on file usage (higher = more critical)
 - **Smart Warnings:** Alerts when modifying high-impact files
 - **Intelligent Caching:** 7-8x speedup with mtime-based cache validation
 - **Test Coverage:** Detects missing test files
 
-### Usage
-```bash
-# Default - with dependency analysis
-python scripts/checkpoint.py --quick
+### How It Works
+Dependency analysis runs automatically on every commit via the post-commit hook. Results are written to `.claude-code-context.md`.
 
-# Skip for speed (3x faster)
-python scripts/checkpoint.py --quick --skip-dependencies
-```
+### Output Example (in .claude-code-context.md)
+```markdown
+## High-Impact Changes
+[!] db/models.py (Impact: 85/100)
+    Used by: 12 file(s)
+    Used by: invoice.py, api.py, billing.py (+9 more)
+    [!] No test file found -> Create test_models.py
 
-### Output Example
-```
-Analyzing dependencies for 16 Python file(s)...
-  Cache: 12 hits, 4 misses (75.0% hit rate)
-  Found 2 high-impact file(s) (score >= 70)
+## Dependencies
+auth/login.py imports:
+- api/routes.py
+- db/models.py
+- utils/validators.py
 
-[RESUME POINTS]
-1. [!] payment.py is used by 12 files - test thoroughly
-2. Run tests for: test_payment.py, test_invoice.py
+## Test Recommendations
+- Run: test_api.py, test_db.py
+- Create: test_auth.py (missing)
 ```
 
 **Full Documentation:** [docs/DEPENDENCY_TRACKING.md](docs/DEPENDENCY_TRACKING.md)
@@ -215,30 +235,48 @@ The session continuity system works across all projects in your workspace:
 
 ## Quick Reference
 
-### Create Checkpoint
+### New Workflow (Phase 3+)
+
+#### Create Checkpoint (Automatic)
 ```bash
-python scripts/checkpoint.py --quick
+# Just commit! Checkpoint + code context auto-generated
+git add .
+git commit -m "Your commit message"
 ```
 
-### Resume Session
+#### Search Past Sessions
 ```bash
-python scripts/resume-session.py
+# Semantic search across all sessions
+/mem-search authentication implementation
+/mem-search database schema changes
+/mem-search why did we choose Redis?
 ```
 
-### Check Context
+#### View Latest Code Context
+```bash
+# View auto-generated code context
+cat .claude-code-context.md    # Windows: type .claude-code-context.md
+```
+
+#### Check Context Usage
 ```bash
 python scripts/context-monitor.py
 ```
 
-### List All Sessions
-```bash
-python scripts/resume-session.py list
-```
-
-### Install Git Hooks
+#### Install Git Hooks (One-Time Setup)
 ```bash
 python scripts/install-hooks.py
 ```
+
+### Old Commands (Deprecated)
+```bash
+# These show deprecation warnings - use new workflow instead
+python scripts/checkpoint.py --quick         # → Use: git commit
+python scripts/resume-session.py             # → Use: /mem-search
+python scripts/save-session.py               # → Use: git commit
+```
+
+**Migration Guide:** See [docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md) for complete command mappings
 
 ---
 

@@ -2,11 +2,22 @@
 """
 Resume Session - Load and display previous session information
 
-This script helps resume work in a new Claude Code session by:
-1. Loading the latest checkpoint
-2. Displaying session state in an easy-to-read format
-3. Providing context for continuation
-4. Suggesting next steps
+⚠️  DEPRECATION WARNING ⚠️
+This script is deprecated as of Phase 3 of the claude-mem migration.
+
+NEW WORKFLOW:
+  - Session checkpoints: Automatic via git post-commit hook
+  - Code context: Auto-generated in .claude-code-context.md
+  - Semantic search: Use /mem-search in Claude Code
+  - Memory: Automatic via claude-mem plugin
+
+See docs/MIGRATION_GUIDE.md for details on the new workflow.
+
+Usage:
+    python resume-session.py            # Display latest checkpoint
+    python resume-session.py list       # List all checkpoints
+    python resume-session.py summary    # Show concise summary
+    python resume-session.py projects   # Show all tracked projects
 """
 
 import json
@@ -28,6 +39,47 @@ spec_index = importlib.util.spec_from_file_location("session_index",
 session_index = importlib.util.module_from_spec(spec_index)
 spec_index.loader.exec_module(session_index)
 SessionIndex = session_index.SessionIndex
+
+
+def print_deprecation_warning():
+    """Print deprecation warning and prompt user"""
+    print()
+    print("=" * 70)
+    print(" " * 20 + "⚠️  DEPRECATION WARNING ⚠️")
+    print("=" * 70)
+    print()
+    print("This script (resume-session.py) is deprecated.")
+    print()
+    print("REASON:")
+    print("  The system has migrated to claude-mem for automatic memory capture.")
+    print()
+    print("NEW WORKFLOW:")
+    print("  1. Start Claude Code (SessionStart hook loads recent context)")
+    print("  2. Use /mem-search to find specific past discussions")
+    print("  3. Read .claude-code-context.md for latest code changes")
+    print()
+    print("BENEFITS:")
+    print("  - Automatic context loading on session start")
+    print("  - Semantic search across all sessions")
+    print("  - Better context preservation")
+    print()
+    print("See: docs/MIGRATION_GUIDE.md for migration details")
+    print("See: .claude-code-context.md for current code context")
+    print()
+    print("=" * 70)
+    print()
+
+    response = input("Continue with deprecated resume-session anyway? (y/N): ")
+    if response.lower() != 'y':
+        print()
+        print("Aborting. Use the new workflow instead:")
+        print("  1. Just start Claude Code (auto-resumes via SessionStart hook)")
+        print("  2. Use /mem-search <query> for semantic retrieval")
+        print()
+        sys.exit(0)
+    print()
+    print("Continuing with deprecated resume-session...")
+    print()
 
 
 class SessionResumer:
@@ -603,6 +655,11 @@ class SessionResumer:
 def main():
     """Command-line interface"""
     import sys
+
+    # Show deprecation warning (skip for informational commands)
+    informational_commands = {'list', 'summary', 'projects'}
+    if len(sys.argv) <= 1 or sys.argv[1] not in informational_commands:
+        print_deprecation_warning()
 
     resumer = SessionResumer()
 

@@ -3,6 +3,17 @@
 Unified Checkpoint Command
 Combines: save-session.py + update-session-state.py + display
 
+⚠️  DEPRECATION WARNING ⚠️
+This script is deprecated as of Phase 3 of the claude-mem migration.
+
+NEW WORKFLOW:
+  - Session checkpoints: Automatic via git post-commit hook
+  - Code context: Auto-generated in .claude-code-context.md
+  - Semantic search: Use /mem-search in Claude Code
+  - Memory: Automatic via claude-mem plugin
+
+See docs/MIGRATION_GUIDE.md for details on the new workflow.
+
 Usage:
     python checkpoint.py --quick                    # Quick checkpoint
     python checkpoint.py                            # Interactive mode
@@ -14,6 +25,47 @@ import sys
 import subprocess
 import argparse
 from pathlib import Path
+
+
+def print_deprecation_warning():
+    """Print deprecation warning and prompt user"""
+    print()
+    print("=" * 70)
+    print(" " * 20 + "⚠️  DEPRECATION WARNING ⚠️")
+    print("=" * 70)
+    print()
+    print("This script (checkpoint.py) is deprecated.")
+    print()
+    print("REASON:")
+    print("  The system has migrated to claude-mem for automatic memory capture.")
+    print()
+    print("NEW WORKFLOW:")
+    print("  1. Make changes and commit with git")
+    print("  2. Checkpoint + code context generated automatically")
+    print("  3. Use /mem-search to retrieve context across sessions")
+    print()
+    print("BENEFITS:")
+    print("  - Zero manual work (fully automated)")
+    print("  - Semantic search across all sessions")
+    print("  - Better context preservation")
+    print()
+    print("See: docs/MIGRATION_GUIDE.md for migration details")
+    print("See: .claude-code-context.md for current code context")
+    print()
+    print("=" * 70)
+    print()
+
+    response = input("Continue with deprecated checkpoint anyway? (y/N): ")
+    if response.lower() != 'y':
+        print()
+        print("Aborting. Use the new workflow instead:")
+        print("  1. Commit your changes: git add . && git commit -m 'message'")
+        print("  2. Context auto-generated on commit")
+        print()
+        sys.exit(0)
+    print()
+    print("Continuing with deprecated checkpoint...")
+    print()
 
 
 def run_command(command: list, description: str, can_fail: bool = False) -> bool:
@@ -129,6 +181,10 @@ Examples:
     )
 
     args = parser.parse_args()
+
+    # Show deprecation warning (unless --dry-run)
+    if not args.dry_run:
+        print_deprecation_warning()
 
     # Get scripts directory
     scripts_dir = Path(__file__).parent
