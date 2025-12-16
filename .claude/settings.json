@@ -6,8 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python scripts/resume-session.py summary",
-            "timeout": 30000
+            "command": "python scripts/session_start_bridge.py",
+            "timeout": 10000
           }
         ]
       }
@@ -18,8 +18,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python scripts/checkpoint.py --quick",
-            "timeout": 60000
+            "command": "python scripts/session_end_bridge.py",
+            "timeout": 30000
           }
         ]
       }
@@ -29,7 +29,11 @@
     "learning-output-style@claude-code-plugins": true,
     "agent-sdk-dev@claude-code-plugins": true,
     "explanatory-output-style@claude-code-plugins": true,
-    "compound-engineering@every-marketplace": true
+    "compound-engineering@every-marketplace": true,
+    "claude-mem@anthropic": true
   },
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": true,
+  "env": {
+    "CLAUDE_MEM_CONTEXT_OBSERVATIONS": "25"
+  }
 }
