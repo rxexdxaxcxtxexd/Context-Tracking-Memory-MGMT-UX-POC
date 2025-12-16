@@ -24,5 +24,12 @@
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {
+    "learning-output-style@claude-code-plugins": true,
+    "agent-sdk-dev@claude-code-plugins": true,
+    "explanatory-output-style@claude-code-plugins": true,
+    "compound-engineering@every-marketplace": true
+  },
+  "alwaysThinkingEnabled": true
 }
