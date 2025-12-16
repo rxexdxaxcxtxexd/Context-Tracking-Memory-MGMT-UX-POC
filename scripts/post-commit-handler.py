@@ -43,8 +43,8 @@ SCRIPT_DIR = Path(__file__).parent
 # Import checkpoint utilities
 checkpoint_utils = import_module("checkpoint_utils", str(SCRIPT_DIR / "checkpoint_utils.py"))
 
-# Import session logger
-session_logger_mod = import_module("session_logger", str(SCRIPT_DIR / "session-logger.py"))
+# Import session logger (from deprecated, still used for checkpoint compatibility)
+session_logger_mod = import_module("session_logger", str(SCRIPT_DIR / "deprecated" / "session-logger.py"))
 SessionLogger = session_logger_mod.SessionLogger
 
 # Import session index
