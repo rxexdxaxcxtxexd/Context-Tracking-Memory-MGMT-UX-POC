@@ -12,6 +12,8 @@ Date: 2025-12-23
 import json
 import time
 import uuid
+import logging
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -52,6 +54,41 @@ class MemoryTriggerEngine:
         # Load session state
         self.state = self._load_state()
 
+        # Setup logging
+        self._setup_logging()
+
+    def _setup_logging(self):
+        """Configure rotating file logger for debugging and monitoring"""
+        log_config = self.config.get('logging', {})
+        log_level = getattr(logging, log_config.get('level', 'INFO'))
+        log_file = Path.home() / log_config.get('file', '.claude/memory-trigger.log')
+        max_bytes = log_config.get('max_size_mb', 10) * 1024 * 1024
+        backup_count = log_config.get('backup_count', 3)
+
+        # Create logger
+        self.logger = logging.getLogger('memory_trigger')
+        self.logger.setLevel(log_level)
+
+        # Clear existing handlers to avoid duplicates
+        self.logger.handlers = []
+
+        # Rotating file handler
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        handler = RotatingFileHandler(
+            log_file,
+            maxBytes=max_bytes,
+            backupCount=backup_count
+        )
+
+        # Format
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
+        self.logger.info("Memory trigger engine initialized")
+
     def register_detector(self, detector: MemoryDetector) -> None:
         """
         Register a detector
@@ -75,13 +112,17 @@ class MemoryTriggerEngine:
         Returns:
             TriggerResult from first triggered detector, or None
         """
+        self.logger.debug(f"Evaluating triggers for prompt: {prompt[:50]}...")
+
         # Build context
         if context is None:
             context = self._build_context()
 
         # Check token budget first
         if not self._check_budget():
-            print(f"[WARNING] Token budget exhausted ({self.state['tokens_used']}/{self.config['budget']['max_tokens_per_session']})")
+            msg = f"Token budget exhausted ({self.state['tokens_used']}/{self.config['budget']['max_tokens_per_session']})"
+            self.logger.warning(msg)
+            print(f"[WARNING] {msg}")
             return None
 
         # Evaluate detectors in priority order
@@ -94,15 +135,23 @@ class MemoryTriggerEngine:
                 if result and result.triggered:
                     # Check if this specific trigger fits within budget
                     if not self._check_budget(result.estimated_tokens):
-                        print(f"[WARNING] Trigger {detector.name} would exceed budget, skipping")
+                        msg = f"Trigger {detector.name} would exceed budget, skipping"
+                        self.logger.warning(msg)
+                        print(f"[WARNING] {msg}")
                         continue
 
+                    self.logger.info(f"Trigger fired: {result.query_type} (confidence: {result.confidence})")
                     return result
 
             except Exception as e:
+                self.logger.error(f"Detector {detector.name} failed: {type(e).__name__}: {e}")
+                if self.logger.level == logging.DEBUG:
+                    import traceback
+                    self.logger.debug(traceback.format_exc())
                 print(f"[ERROR] Detector {detector.name} failed: {e}")
                 continue
 
+        self.logger.debug("No triggers fired")
         return None
 
     def query_memory(self, trigger_result: TriggerResult) -> Optional[Dict[str, Any]]:
@@ -115,7 +164,10 @@ class MemoryTriggerEngine:
         Returns:
             Memory query result dict or None on error
         """
+        self.logger.debug(f"Querying memory: {trigger_result.query_type}")
+
         if not self.memory_client.is_available():
+            self.logger.warning("MCP memory server unavailable")
             print("[WARNING] MCP memory server unavailable")
             return None
 
@@ -136,17 +188,26 @@ class MemoryTriggerEngine:
                 # Search for pending/incomplete items
                 result = self.memory_client.search_nodes("status:pending OR status:incomplete")
             else:
-                print(f"[WARNING] Unknown query type: {query_type}")
+                msg = f"Unknown query type: {query_type}"
+                self.logger.warning(msg)
+                print(f"[WARNING] {msg}")
                 result = None
 
             # Update token usage
             if result:
                 actual_tokens = self.memory_client.estimate_tokens(result)
                 self._record_trigger(trigger_result, actual_tokens)
+                self.logger.info(f"Memory query returned {len(result.get('entities', []))} entities")
+            else:
+                self.logger.warning("Memory query returned no results")
 
             return result
 
         except Exception as e:
+            self.logger.error(f"Memory query failed: {type(e).__name__}: {e}")
+            if self.logger.level == logging.DEBUG:
+                import traceback
+                self.logger.debug(traceback.format_exc())
             print(f"[ERROR] Memory query failed: {e}")
             return None
 

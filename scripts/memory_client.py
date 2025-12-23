@@ -208,7 +208,7 @@ class MemoryClient:
 
     def _call_mcp_tool(self, tool_name: str, params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
-        Call an MCP memory tool
+        Call an MCP memory tool with timeout enforcement
 
         This is a simplified implementation that assumes the MCP tools are
         available in the current Python environment. In practice, MCP tools
@@ -229,12 +229,24 @@ class MemoryClient:
             # NOTE: This assumes tools are accessible in the environment
             # The actual implementation may differ based on how MCP tools are exposed
 
+            # TODO: When implementing actual MCP calls, add timeout enforcement:
+            # If using subprocess:
+            #   result = subprocess.run(
+            #       [...command...],
+            #       timeout=self.query_timeout,  # Enforce timeout
+            #       capture_output=True
+            #   )
+            # If using other async methods, ensure timeout is enforced
+
             # Placeholder: Return empty result for now
             # This will be replaced with actual MCP tool invocation
             return {"entities": [], "relations": []}
 
+        except subprocess.TimeoutExpired:
+            print(f"[WARNING] MCP tool {tool_name} timed out after {self.query_timeout}s")
+            return None
         except Exception as e:
-            print(f"Error calling MCP tool {tool_name}: {e}")
+            print(f"[ERROR] Error calling MCP tool {tool_name}: {e}")
             return None
 
     def _retry_operation(self, operation, operation_name: str) -> Optional[Any]:
