@@ -136,12 +136,22 @@ class DetectorRegistry:
 
     def register(self, detector: MemoryDetector) -> None:
         """
-        Register a detector
+        Register a detector (prevents duplicates by name)
+
+        If a detector with the same name already exists, it will be replaced.
+        This allows manual registration to override auto-registered detectors.
 
         Args:
             detector: MemoryDetector instance
         """
+        # Check for duplicate and remove if exists
+        existing = self.get_detector(detector.name)
+        if existing:
+            self._detectors = [d for d in self._detectors if d.name != detector.name]
+
+        # Add new detector
         self._detectors.append(detector)
+
         # Sort by priority (lower number = higher priority)
         self._detectors.sort(key=lambda d: d.priority)
 

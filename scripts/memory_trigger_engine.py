@@ -57,6 +57,9 @@ class MemoryTriggerEngine:
         # Setup logging
         self._setup_logging()
 
+        # Auto-register detectors from config
+        self._initialize_detectors()
+
     def _setup_logging(self):
         """Configure rotating file logger for debugging and monitoring"""
         log_config = self.config.get('logging', {})
@@ -97,6 +100,63 @@ class MemoryTriggerEngine:
             detector: MemoryDetector instance
         """
         self.registry.register(detector)
+
+    def _initialize_detectors(self) -> None:
+        """
+        Auto-register detectors from configuration
+
+        Dynamically loads and registers detectors based on config['detectors'].
+        Handles import errors gracefully - missing detectors won't crash the engine.
+
+        Special handling:
+        - EntityMentionDetector: Requires set_memory_client() call after instantiation
+        """
+        detector_config = self.config.get('detectors', {})
+
+        # Detector mapping: config_key -> (module_path, class_name, default_priority)
+        DETECTOR_MAP = {
+            'project_switch': ('memory_detectors.project_switch_detector', 'ProjectSwitchDetector', 1),
+            'keyword': ('memory_detectors.keyword_detector', 'KeywordDetector', 2),
+            'entity_mention': ('memory_detectors.entity_mention_detector', 'EntityMentionDetector', 3),
+            'token_threshold': ('memory_detectors.token_threshold_detector', 'TokenThresholdDetector', 4),
+        }
+
+        registered_count = 0
+        failed_count = 0
+
+        for config_key, (module_path, class_name, default_priority) in DETECTOR_MAP.items():
+            # Check if detector is enabled in config
+            detector_settings = detector_config.get(config_key, {})
+            if not detector_settings.get('enabled', False):
+                self.logger.debug(f"Detector {config_key} is disabled, skipping")
+                continue
+
+            try:
+                # Dynamic import
+                module = __import__(module_path, fromlist=[class_name])
+                detector_class = getattr(module, class_name)
+
+                # Instantiate detector
+                detector = detector_class(detector_settings)
+
+                # Special handling for EntityMentionDetector
+                if config_key == 'entity_mention' and hasattr(detector, 'set_memory_client'):
+                    detector.set_memory_client(self.memory_client)
+                    self.logger.debug(f"Set memory client for {detector.name}")
+
+                # Register detector
+                self.registry.register(detector)
+                registered_count += 1
+                self.logger.info(f"Auto-registered detector: {detector.name}")
+
+            except ImportError as e:
+                self.logger.warning(f"Could not import {class_name}: {e}")
+                failed_count += 1
+            except Exception as e:
+                self.logger.error(f"Failed to initialize {class_name}: {e}")
+                failed_count += 1
+
+        self.logger.info(f"Detector auto-registration complete: {registered_count} registered, {failed_count} failed")
 
     def evaluate_triggers(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> Optional[TriggerResult]:
         """

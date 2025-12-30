@@ -56,10 +56,19 @@ def load_detectors(engine: MemoryTriggerEngine, config: Dict[str, Any]) -> None:
     """
     Load and register detector modules
 
+    NOTE: As of Phase 4 fix, detectors are auto-registered in MemoryTriggerEngine.__init__()
+    This function is maintained for backward compatibility and can be used to override
+    auto-registered detectors or add custom detectors.
+
     Args:
         engine: MemoryTriggerEngine instance
         config: Configuration dict
     """
+    # Check if detectors already registered (via auto-registration)
+    if len(engine.registry) > 0:
+        print(f"[DEBUG] Detectors already registered ({len(engine.registry)}), skipping load_detectors()")
+        return
+
     detector_config = config.get('detectors', {})
 
     # Try to load project switch detector (Priority 1 - runs first)
