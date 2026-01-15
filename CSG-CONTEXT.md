@@ -10,84 +10,67 @@
 
 ### What CSG Does
 
-**Cornerstone Solutions Group (CSG)** is a mid-size software consulting and development firm (20-50 people) that provides comprehensive technology services to clients across multiple industries.
+**Cornerstone Solutions Group (CSG)** is a mid-size software consulting and development firm (25-75 people) that provides comprehensive technology services to clients across multiple industries.
 
-**Service Offerings:**
-- **Custom Software Development** - Build new applications from scratch tailored to client needs
-- **Legacy Modernization** - Update and migrate existing systems to modern platforms
-- **Staff Augmentation** - Provide skilled developers to augment client teams
-- **Consulting & Advisory** - Strategic guidance and technical consulting
+**Service Model:** Balanced portfolio approach
+- **Custom Software Development** - Build new applications from scratch (greenfield projects)
+- **Legacy Modernization** - Upgrade and migrate existing systems to modern platforms
+- **Staff Augmentation** - Provide skilled developers to augment client teams on T&M basis
 
 **Industry Focus:**
-- **Transportation & Logistics** (Primary) - Supply chain, fleet management, logistics (e.g., BargeOps)
-- **Healthcare** - Medical, pharmaceutical, health tech solutions
-- **Generalist Approach** - Also work across other industries as opportunities arise
-
-**Typical Project Profile:**
-- Mix of greenfield development, modernization, and ongoing support engagements
-- Range from multi-month fixed-scope projects to ongoing T&M partnerships
-- Team sizes vary from solo augmentation to full delivery teams
+- **Transportation & Logistics** (Primary) - Supply chain, fleet management, logistics platforms (e.g., BargeOps)
+- **Healthcare & Life Sciences** - Medical software, pharmaceutical, health tech solutions
+- **Telecommunications** - Emerging focus area, particularly AI-focused engagements
+- **Generalist Approach** - Work across other industries as opportunities arise
 
 **Work Model:**
-- Mostly in-office based with some flexibility
-- Collaborative, team-oriented environment
-- Strong emphasis on delivery excellence
+- Long-term partnership approach - CSG becomes trusted advisor and extension of client teams
+- Not just project vendors, but strategic partners who understand client business deeply
+- High client retention, multi-year relationships built on trust and delivery excellence
 
 ### Revenue Model
 
-**Pricing Approach:** Mixed model depending on project type
-- **Time & Materials (T&M)** - For ongoing engagements, staff augmentation, exploratory work
-- **Fixed-Price Projects** - For well-defined scope, clear deliverables
-- **Retainer/Managed Services** - For long-term support and maintenance
-- Flexibility to use the model that best fits client needs and risk profile
+**Pricing Approach:** Flexible model based on project type and client needs
+- **Preferred: Time & Materials (T&M)** - For ongoing engagements, staff augmentation, exploratory work
+- **Trend: Fixed-Price Projects** - Increasing demand, especially for AI-focused work
+- **Reality: Mixed Approach** - Use the model that best fits project risk profile and client preferences
+
+**Key Insight:** Noticing trend toward fixed-price engagements specifically for AI tool development work. Clients want predictable costs for innovation initiatives.
 
 **Typical Engagement Types:**
 1. **Greenfield Development** - Build new systems from requirements through deployment
 2. **Modernization Projects** - Upgrade legacy systems, migrate platforms, refactor codebases
-3. **Ongoing Support** - Maintain and enhance existing applications over time
-4. **Team Augmentation** - Place developers on client teams for extended periods
+3. **Ongoing Support & Augmentation** - Maintain and enhance applications, provide team capacity
+4. **AI Tool Development** - Build custom AI solutions (emerging practice area)
 
 ### 2026 Strategic Goals
 
 **Top 3 Priorities:**
 
 1. **Revenue Growth** - Hit revenue targets, win new clients, expand existing accounts
-2. **Operational Excellence** - Improve delivery efficiency, quality, and processes
-3. **New Service Offerings** - Launch innovative capabilities like AI tooling portfolio
+   - Focus on sales and business development
+   - Grow existing relationships into deeper partnerships
+   - Position for top-line expansion
 
-**Growth Targets:**
-- Expand revenue through combination of new clients and deeper engagement with existing clients
-- Maintain or improve margins through operational improvements and efficiency gains
-- Position CSG as thought leaders in AI-driven delivery transformation
+2. **Innovation & Differentiation** - Build competitive advantages through new capabilities
+   - **AI Tooling Portfolio** (This initiative!) - Position CSG as innovation leader
+   - New service offerings that differentiate from competitors
+   - Thought leadership in AI-driven delivery transformation
 
-### Competitive Positioning
-
-**What Makes CSG Different:**
-
-1. **Long-Term Partnerships** - CSG becomes a trusted advisor and extension of client teams
-   - Not just project vendors, but strategic partners who understand client business deeply
-   - High client retention, multi-year relationships
-
-2. **Agility & Speed** - Faster delivery, more responsive than larger competitors
-   - Can pivot quickly to changing requirements
-   - Less bureaucracy, faster decision-making
-   - Proactive problem-solving
-
-3. **Deep Industry Expertise** - Specialized knowledge in transportation/logistics and healthcare
-   - Understand domain-specific challenges and regulations
-   - Bring best practices from similar projects
-
-**Market Position:** Premium-quality boutique firm competing on expertise and relationships rather than price
+3. **Operational Excellence** - Improve delivery efficiency, quality, and margins
+   - Optimize processes and reduce waste
+   - Increase quality and reduce defects
+   - Maintain or improve profit margins while scaling
 
 ### Success Metrics
 
-**What Defines Success for CSG:**
+**What Defines Success for CSG in 2026:**
 
-1. **Client Satisfaction** - High CSAT scores, repeat business, long-term retention
-2. **Revenue & Profitability** - Hit growth targets while maintaining healthy margins
-3. **Team Growth & Retention** - Attract and keep top talent, low turnover
-4. **Delivery Quality** - On-time, on-budget delivery with minimal defects
-5. **Innovation Leadership** - Recognized as innovators in AI-driven software delivery
+1. **Revenue & Profitability** - Hit growth targets while maintaining healthy margins
+2. **Delivery Quality** - On-time, on-budget delivery with minimal defects
+3. **Client Satisfaction & Retention** - High CSAT scores, repeat business, long-term retention
+
+**Market Position:** Premium-quality firm competing on partnership approach, delivery excellence, and innovation - not on price
 
 ---
 
