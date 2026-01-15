@@ -145,13 +145,13 @@ def initialize_session_context() -> Dict[str, Any]:
             result['error'] = f"TaskStack load failed: {e}"
 
         try:
-            from session_state import SessionState
+            from session_state_manager import SessionState
             session_state = SessionState()
             session_state.load()
             result['session_state'] = session_state
             print(f"  - Session state loaded")
         except ImportError:
-            print("  - Warning: session_state.py not available")
+            print("  - Warning: session_state_manager.py not available")
             if not result['error']:
                 result['error'] = "SessionState module not found"
         except Exception as e:
@@ -165,7 +165,8 @@ def initialize_session_context() -> Dict[str, Any]:
         try:
             from mode_detector import ModeDetector
             detector = ModeDetector()
-            mode = detector.analyze_session()
+            analysis = detector.analyze_session()
+            mode = analysis["mode"]
 
             if result['session_state']:
                 result['session_state'].set_mode(mode)
@@ -195,11 +196,11 @@ def initialize_session_context() -> Dict[str, Any]:
         print("Initializing monitoring...")
 
         try:
-            from tool_monitor import ToolMonitor
+            from context_hooks import ToolMonitor
             monitor = ToolMonitor()
             print("  - Tool monitor ready (requires hook integration)")
         except ImportError:
-            print("  - Warning: tool_monitor.py not available")
+            print("  - Warning: context_hooks.py not available")
         except Exception as e:
             print(f"  - Warning: Could not initialize monitor: {e}")
 
@@ -214,7 +215,7 @@ def initialize_session_context() -> Dict[str, Any]:
             print(f"  - Warning: Could not save session state: {e}")
 
         result['success'] = True
-        print("\n" + "✓" if USE_EMOJI else "[OK]" + " Session context initialized successfully!\n")
+        print("\n" + ("✓" if USE_EMOJI else "[OK]") + " Session context initialized successfully!\n")
 
     except Exception as e:
         result['error'] = str(e)
@@ -257,7 +258,7 @@ def show_status() -> None:
 
     # Session state status
     try:
-        from session_state import SessionState
+        from session_state_manager import SessionState
         session_state = SessionState()
         session_state.load()
 
@@ -274,9 +275,9 @@ def show_status() -> None:
     print("SYSTEM HEALTH:")
     modules = {
         'task_stack': 'Task Stack',
-        'session_state': 'Session State',
+        'session_state_manager': 'Session State',
         'mode_detector': 'Mode Detector',
-        'tool_monitor': 'Tool Monitor'
+        'context_hooks': 'Tool Monitor'
     }
 
     for module_name, display_name in modules.items():
@@ -326,10 +327,10 @@ def reset_state() -> None:
 
     # Reset session state
     try:
-        from session_state import SessionState
+        from session_state_manager import SessionState
         session_state = SessionState()
         # Reset to defaults
-        session_state.mode = None
+        session_state.mode = "task"
         session_state.recent_tasks = []
         session_state.decisions = []
         session_state.context_switches = []
@@ -338,7 +339,7 @@ def reset_state() -> None:
     except Exception as e:
         print(f"  - Warning: Could not reset session state: {e}")
 
-    print("\n" + "✓" if USE_EMOJI else "[OK]" + " Reset complete!\n")
+    print("\n" + ("✓" if USE_EMOJI else "[OK]") + " Reset complete!\n")
 
 
 def main() -> int:
